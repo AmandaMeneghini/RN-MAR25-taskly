@@ -20,18 +20,34 @@ import styles from './style';
 import {API_BASE_URL} from '../../env';
 import * as Keychain from 'react-native-keychain';
 
-import avatar1 from '../../Assets/Images/Avatars/avatar_1.png';
-import avatar2 from '../../Assets/Images/Avatars/avatar_2.png';
-import avatar3 from '../../Assets/Images/Avatars/avatar_3.png';
-import avatar4 from '../../Assets/Images/Avatars/avatar_4.png';
-import avatar5 from '../../Assets/Images/Avatars/avatar_5.png';
+const S3_AVATAR_BASE_URL = 'https://taskly-media.s3.us-east-1.amazonaws.com/';
 
 const AVATARS = [
-  {id: 'avatar_1', source: avatar1, borderColor: '#6C4AE4'},
-  {id: 'avatar_2', source: avatar2, borderColor: '#E4B14A'},
-  {id: 'avatar_3', source: avatar3, borderColor: '#4AE47B'},
-  {id: 'avatar_4', source: avatar4, borderColor: '#E44A4A'},
-  {id: 'avatar_5', source: avatar5, borderColor: '#B89B5B'},
+  {
+    id: 'avatar_1',
+    source: { uri: `${S3_AVATAR_BASE_URL}avatar_1.png` },
+    borderColor: '#6C4AE4',
+  },
+  {
+    id: 'avatar_2',
+    source: { uri: `${S3_AVATAR_BASE_URL}avatar_2.png` },
+    borderColor: '#E4B14A',
+  },
+  {
+    id: 'avatar_3',
+    source: { uri: `${S3_AVATAR_BASE_URL}avatar_3.png` },
+    borderColor: '#4AE47B',
+  },
+  {
+    id: 'avatar_4',
+    source: { uri: `${S3_AVATAR_BASE_URL}avatar_4.png` },
+    borderColor: '#E44A4A',
+  },
+  {
+    id: 'avatar_5',
+    source: { uri: `${S3_AVATAR_BASE_URL}avatar_5.png` },
+    borderColor: '#B89B5B',
+  },
 ];
 
 const AVATAR_SIZE = 100;
@@ -71,8 +87,6 @@ export default function AvatarSelector() {
       return;
     }
 
-    console.log('API_BASE_URL:', API_BASE_URL);
-
     try {
       const credentials = await Keychain.getGenericPassword();
 
@@ -86,19 +100,16 @@ export default function AvatarSelector() {
       }
 
       const token = credentials.password;
-
-      console.log('Token usado para armazenar avatar:', token);
-
       await Keychain.setGenericPassword(
         'auth',
         JSON.stringify({idToken: token, avatar: selectedId}),
       );
 
-      console.log('Avatar armazenado com sucesso!');
+      console.log('Avatar armazenado com sucesso no Keychain!', selectedId);
 
       setIsModalVisible(true);
     } catch (error) {
-      console.error('Erro ao processar a requisição:', error);
+      console.error('Erro ao processar a requisição de cadastro:', error);
       Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação.');
     }
   };
@@ -111,6 +122,7 @@ export default function AvatarSelector() {
 
     try {
       const credentials = await Keychain.getGenericPassword();
+
       if (!credentials || !credentials.password) {
         Alert.alert('Erro', 'Token não encontrado. Faça login novamente.');
         navigation.reset({
@@ -122,24 +134,7 @@ export default function AvatarSelector() {
 
       const token = credentials.password;
 
-      console.log('Token usado para atualizar avatar:', token);
-      console.log('Avatar selecionado:', selectedId);
-
-      // Buscar os dados do perfil do usuário
-      const profileResponse = await fetch(`${API_BASE_URL}/profile`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!profileResponse.ok) {
-        Alert.alert('Erro', 'Não foi possível carregar os dados do perfil.');
-        return;
-      }
-
-      const profileData = await profileResponse.json();
-      console.log('Dados do perfil carregados:', profileData);
+      const cleanedPhoneNumber = route.params?.phone_number?.replace(/\D/g, '');
 
       const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'PUT',
@@ -148,32 +143,40 @@ export default function AvatarSelector() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: profileData.name,
-          phone_number: profileData.phone_number,
+          name: route.params?.name,
+          phone_number: cleanedPhoneNumber,
           picture: selectedId,
         }),
       });
 
-      console.log('Resposta da API:', response.status);
+      const contentType = response.headers.get('Content-Type');
+      let responseData;
+
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        responseData = await response.text();
+      }
 
       if (response.ok) {
+        console.log('Perfil atualizado com sucesso!');
         setIsModalVisible(true);
       } else {
-        const errorResponse = await response.json();
-        console.error('Erro ao atualizar avatar:', errorResponse);
-        Alert.alert('Erro', 'Não foi possível atualizar o avatar.');
+        console.error('Erro ao atualizar perfil:', responseData);
+        Alert.alert(
+          'Erro',
+          responseData.error || 'Não foi possível atualizar o perfil.',
+        );
       }
     } catch (error) {
-      console.error('Erro ao processar a requisição:', error);
+      console.error('Erro ao processar a requisição de edição:', error);
       Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação.');
     }
   };
 
   const handleModalClose = () => {
     if (!isModalVisible) return;
-
     setIsModalVisible(false);
-
     navigation.reset({
       index: 0,
       routes: [{name: isEditing ? 'MainApp' : 'Login'}],
@@ -223,6 +226,8 @@ export default function AvatarSelector() {
                   margin: AVATAR_MARGIN / 2,
                   overflow: 'hidden',
                   padding: 0,
+                  width: AVATAR_SIZE,
+                  height: AVATAR_SIZE,
                 },
               ]}
               activeOpacity={0.7}
@@ -230,12 +235,8 @@ export default function AvatarSelector() {
               <Image
                 source={avatar.source}
                 style={{
-                  position: 'absolute',
-                  left: -(AVATAR_SIZE * 0.1),
-                  top: 0,
-                  width: AVATAR_SIZE * 1.2,
-                  height: AVATAR_SIZE,
-                  borderRadius: AVATAR_SIZE / 2,
+                  width: '100%',
+                  height: '100%',
                 }}
                 resizeMode="cover"
               />
@@ -245,9 +246,8 @@ export default function AvatarSelector() {
                     position: 'absolute',
                     left: 0,
                     top: 0,
-                    width: AVATAR_SIZE * 1.2,
-                    height: AVATAR_SIZE,
-                    borderRadius: AVATAR_SIZE / 2,
+                    width: '100%',
+                    height: '100%',
                     backgroundColor: 'rgba(0,0,0,0.4)',
                   }}
                 />
