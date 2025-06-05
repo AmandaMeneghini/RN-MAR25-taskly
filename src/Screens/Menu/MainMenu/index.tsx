@@ -18,14 +18,7 @@ import {
   refreshAuthToken,
 } from '../../../Utils/authUtils';
 
-const avatarMap: Record<string, any> = {
-  avatar_1: require('../../../Assets/Images/Avatars/avatar_1.png'),
-  avatar_2: require('../../../Assets/Images/Avatars/avatar_2.png'),
-  avatar_3: require('../../../Assets/Images/Avatars/avatar_3.png'),
-  avatar_4: require('../../../Assets/Images/Avatars/avatar_4.png'),
-  avatar_5: require('../../../Assets/Images/Avatars/avatar_5.png'),
-};
-
+const S3_AVATAR_BASE_URL = 'https://taskly-media.s3.us-east-1.amazonaws.com/';
 
 type Props = {
   navigation: any;
@@ -39,7 +32,7 @@ const MenuPrincipal = ({navigation, route}: Props) => {
     name: '',
     email: '',
     phone: '',
-    avatarUrl: '', // Adicionado para armazenar o avatar
+    avatarId: '',
   });
 
   const fetchUserProfile = useCallback(async () => {
@@ -66,8 +59,8 @@ const MenuPrincipal = ({navigation, route}: Props) => {
         setUserData({
           name: data.name || 'Usuário',
           email: data.email || 'Email não disponível',
-          phone: data.phone_number || 'Telefone não disponível', // Atualizado para usar phone_number
-          avatarUrl: data.picture || '', // Atualizado para usar picture
+          phone: data.phone_number || 'Telefone não disponível',
+          avatarId: data.picture || '',
         });
       } else if (response.status === 401) {
         console.log('Token inválido ou expirado. Tentando renovar...');
@@ -75,7 +68,6 @@ const MenuPrincipal = ({navigation, route}: Props) => {
           const newToken = await refreshAuthToken();
           console.log('Token renovado com sucesso:', newToken);
 
-          // Tentar buscar o perfil novamente com o novo token
           const retryResponse = await fetch(`${API_BASE_URL}/profile`, {
             method: 'GET',
             headers: {
@@ -90,7 +82,7 @@ const MenuPrincipal = ({navigation, route}: Props) => {
               name: data.name || 'Usuário',
               email: data.email || 'Email não disponível',
               phone: data.phone_number || 'Telefone não disponível',
-              avatarUrl: data.picture || '',
+              avatarId: data.picture || '',
             });
           } else {
             throw new Error('Erro ao buscar perfil com novo token.');
@@ -114,6 +106,8 @@ const MenuPrincipal = ({navigation, route}: Props) => {
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);
       Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
+
+      await removeToken();
       navigation.reset({
         index: 0,
         routes: [{name: 'Login'}],
@@ -132,15 +126,15 @@ const MenuPrincipal = ({navigation, route}: Props) => {
     }
   }, [route.params, hasShownModal]);
 
+  const avatarSourceUri = userData.avatarId
+    ? `${S3_AVATAR_BASE_URL}${userData.avatarId}.png`
+    : `${S3_AVATAR_BASE_URL}avatar_5.png`;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.profileSection}>
         <Image
-          source={
-            userData.avatarUrl && avatarMap[userData.avatarUrl]
-              ? avatarMap[userData.avatarUrl]
-              : require('../../../Assets/Images/Avatars/avatar_5.png')
-          }
+          source={{ uri: avatarSourceUri }}
           style={styles.avatar}
         />
         <View style={styles.containerInfo}>

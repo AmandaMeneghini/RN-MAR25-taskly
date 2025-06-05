@@ -22,7 +22,7 @@ import * as Keychain from 'react-native-keychain';
 
 const S3_AVATAR_BASE_URL = 'https://taskly-media.s3.us-east-1.amazonaws.com/';
 
-const AVATARS = [
+const avatars = [
   {
     id: 'avatar_1',
     source: { uri: `${S3_AVATAR_BASE_URL}avatar_1.png` },
@@ -50,9 +50,9 @@ const AVATARS = [
   },
 ];
 
-const AVATAR_SIZE = 100;
-const AVATAR_MARGIN = 12;
-const GRAY_BORDER = '#D1D5DB';
+const avatarSize = 100;
+const avatarMargin = 12;
+const grayBorder = '#D1D5DB';
 
 export default function AvatarSelector() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -207,7 +207,7 @@ export default function AvatarSelector() {
         <Text style={styles.textPick}>(Escolha somente um.)</Text>
       </View>
       <View style={styles.avatarsRow}>
-        {AVATARS.map(avatar => {
+        {avatars.map(avatar => {
           const isSelected = selectedId === avatar.id;
           const isDimmed = selectedId && !isSelected;
           return (
@@ -219,15 +219,15 @@ export default function AvatarSelector() {
                   borderColor: selectedId
                     ? isSelected
                       ? avatar.borderColor
-                      : GRAY_BORDER
+                      : grayBorder
                     : avatar.borderColor,
                   borderWidth: 3,
-                  borderRadius: AVATAR_SIZE / 2,
-                  margin: AVATAR_MARGIN / 2,
+                  borderRadius: avatarSize / 2,
+                  margin: avatarMargin / 2,
                   overflow: 'hidden',
                   padding: 0,
-                  width: AVATAR_SIZE,
-                  height: AVATAR_SIZE,
+                  width: avatarSize,
+                  height: avatarSize,
                 },
               ]}
               activeOpacity={0.7}
