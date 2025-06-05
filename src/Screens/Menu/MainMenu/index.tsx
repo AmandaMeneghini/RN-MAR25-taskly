@@ -120,7 +120,7 @@ const MenuPrincipal = ({navigation, route}: Props) => {
 
   const avatarSourceUri = userData.avatarId
     ? `${S3_AVATAR_BASE_URL}${userData.avatarId}.png`
-    : `${S3_AVATAR_BASE_URL}avatar_5.png`;
+    : `${S3_AVATAR_BASE_URL}avatar_1.png`;
 
   return (
     <SafeAreaView style={styles.safeArea}>
