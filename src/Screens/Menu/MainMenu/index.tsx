@@ -37,14 +37,11 @@ const MenuPrincipal = ({navigation, route}: Props) => {
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      console.log('Tentando buscar perfil do usuário...');
       const token = await getToken();
 
       if (!token) {
         throw new Error('Token não encontrado. Faça login novamente.');
       }
-
-      console.log('Token usado para buscar perfil:', token);
 
       const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'GET',
@@ -55,7 +52,6 @@ const MenuPrincipal = ({navigation, route}: Props) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Dados do perfil:', data);
         setUserData({
           name: data.name || 'Usuário',
           email: data.email || 'Email não disponível',
@@ -63,11 +59,8 @@ const MenuPrincipal = ({navigation, route}: Props) => {
           avatarId: data.picture || '',
         });
       } else if (response.status === 401) {
-        console.log('Token inválido ou expirado. Tentando renovar...');
         try {
           const newToken = await refreshAuthToken();
-          console.log('Token renovado com sucesso:', newToken);
-
           const retryResponse = await fetch(`${API_BASE_URL}/profile`, {
             method: 'GET',
             headers: {
@@ -77,7 +70,6 @@ const MenuPrincipal = ({navigation, route}: Props) => {
 
           if (retryResponse.ok) {
             const data = await retryResponse.json();
-            console.log('Dados do perfil com novo token:', data);
             setUserData({
               name: data.name || 'Usuário',
               email: data.email || 'Email não disponível',
