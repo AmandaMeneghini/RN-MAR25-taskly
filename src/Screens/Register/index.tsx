@@ -26,7 +26,6 @@ export const storeToken = async (idToken: string, refreshToken?: string) => {
       throw new Error('O idToken é obrigatório para armazenar os tokens.');
     }
 
-    // Armazenar os tokens como um objeto JSON
     const tokenData = JSON.stringify({idToken, refreshToken});
     await Keychain.setGenericPassword('auth', tokenData);
   } catch (error) {
@@ -125,11 +124,9 @@ export default function Register() {
 
         setShowBiometryModal(true);
       } else {
-        console.error('Erro no cadastro:', response.data);
         Alert.alert('Erro', 'Não foi possível realizar o cadastro.');
       }
     } catch (error) {
-      console.error('Erro ao registrar usuário:', error);
       Alert.alert('Erro', 'Não foi possível realizar o cadastro.');
     } finally {
       setLoading(false);
@@ -170,7 +167,6 @@ export default function Register() {
         console.log('Autenticação biométrica cancelada pelo usuário.');
       }
     } catch (error) {
-      console.error('Erro durante a autenticação biométrica:', error);
       Alert.alert('Erro', 'Falha na autenticação biométrica.');
     } finally {
       setBiometryApiLoading(false);
@@ -307,7 +303,7 @@ export default function Register() {
               email,
               password,
               name,
-              phone_number: number.replace(/\D/g, ''), // Passar o número formatado
+              phone_number: number.replace(/\D/g, ''),
             });
           }
         }}

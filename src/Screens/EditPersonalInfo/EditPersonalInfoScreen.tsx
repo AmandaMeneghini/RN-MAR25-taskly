@@ -9,7 +9,7 @@ import ProfileHeader from '../../components/ProfileHeader';
 import ProgressBar from '../../components/ProgressBar';
 import styles from './style';
 import {API_BASE_URL} from '../../env';
-import * as Keychain from 'react-native-keychain';
+import { getToken } from '../../Utils/authUtils';
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -26,15 +26,17 @@ function EditPersonalInfoScreen() {
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      const credentials = await Keychain.getGenericPassword();
-      if (!credentials || !credentials.password) {
+      const token = await getToken();
+      if (!token) {
         throw new Error('Token não encontrado. Faça login novamente.');
       }
+
+      console.log('[EditProfile] Token usado para buscar perfil:', token);
 
       const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${credentials.password}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -50,12 +52,15 @@ function EditPersonalInfoScreen() {
           routes: [{name: 'Login'}],
         });
       } else {
+        const errorText = await response.text();
+        console.log('[EditProfile] Erro ao carregar perfil:', response.status, errorText);
         Alert.alert(
           'Erro',
           'Não foi possível carregar as informações do perfil.',
         );
       }
     } catch (error) {
+      console.log('[EditProfile] Erro em fetchUserProfile:', error);
       Alert.alert(
         'Erro',
         'Não foi possível carregar as informações do perfil. Faça login novamente.',
@@ -105,7 +110,7 @@ function EditPersonalInfoScreen() {
       navigation.navigate('AvatarSelector', {
         name,
         phone_number: cleanedPhone,
-        isEditing: true, // Fluxo de edição de perfil
+        isEditing: true,
       });
     }
   };
@@ -152,7 +157,6 @@ function EditPersonalInfoScreen() {
             }}
             onBlur={() => setPhoneError(validatePhone(phone) || '')}
             error={phoneError}
-            //  mask="phone"
             containerStyle={styles.inputSpacing}
           />
           <Button
