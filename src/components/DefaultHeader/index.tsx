@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import { View, Text, Image } from 'react-native';
 import styles from './style';
 
-const S3_AVATAR_BASE_URL = 'https://taskly-media.s3.us-east-1.amazonaws.com/';
+import { getS3AvatarUrl } from '../../Utils/imageUtils'; 
 
 interface DefaultHeaderProps {
   leftComponent?: ReactNode;
@@ -10,8 +10,7 @@ interface DefaultHeaderProps {
 }
 
 const DefaultHeader: React.FC<DefaultHeaderProps> = ({ leftComponent, avatarSource }) => {
-  const avatarId = avatarSource && avatarSource.trim() !== '' ? avatarSource : 'avatar_1';
-  const finalAvatarUri = `${S3_AVATAR_BASE_URL}${avatarId}.png`;
+  const finalAvatarUri = getS3AvatarUrl(avatarSource, 'avatar_1');
 
   return (
     <View style={styles.header}>

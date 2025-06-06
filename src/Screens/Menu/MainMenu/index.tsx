@@ -18,7 +18,7 @@ import {
   refreshAuthToken,
 } from '../../../Utils/authUtils';
 
-const S3_AVATAR_BASE_URL = 'https://taskly-media.s3.us-east-1.amazonaws.com/';
+import { getS3AvatarUrl } from '../../../Utils/imageUtils';
 
 type Props = {
   navigation: any;
@@ -80,7 +80,6 @@ const MenuPrincipal = ({navigation, route}: Props) => {
             throw new Error('Erro ao buscar perfil com novo token.');
           }
         } catch (refreshError) {
-          console.error('Erro ao renovar o token:', refreshError);
           Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
           await removeToken();
           navigation.reset({
@@ -89,14 +88,12 @@ const MenuPrincipal = ({navigation, route}: Props) => {
           });
         }
       } else {
-        console.error('Erro ao buscar perfil:', response.status);
         Alert.alert(
           'Erro',
           'Não foi possível carregar as informações do perfil.',
         );
       }
     } catch (error) {
-      console.error('Erro ao buscar perfil:', error);
       Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
 
       await removeToken();
@@ -118,9 +115,7 @@ const MenuPrincipal = ({navigation, route}: Props) => {
     }
   }, [route.params, hasShownModal]);
 
-  const avatarSourceUri = userData.avatarId
-    ? `${S3_AVATAR_BASE_URL}${userData.avatarId}.png`
-    : `${S3_AVATAR_BASE_URL}avatar_1.png`;
+  const avatarSourceUri = getS3AvatarUrl(userData.avatarId, 'avatar_5');
 
   return (
     <SafeAreaView style={styles.safeArea}>

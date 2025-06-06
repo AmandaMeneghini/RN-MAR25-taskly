@@ -20,7 +20,8 @@ import {getTasks, saveTasks} from '../../Utils/asyncStorageUtils';
 import {Task} from '../../interfaces/task';
 import DefaultHeader from '../../components/DefaultHeader';
 import {API_BASE_URL} from '../../env';
-import * as Keychain from 'react-native-keychain';
+import { getToken } from '../../Utils/authUtils';
+
 
 type PriorityType = 'lowToHigh' | 'highToLow' | null;
 type TagsType = string[];
@@ -46,31 +47,32 @@ const Home: React.FC = () => {
   useEffect(() => {
     const loadAvatar = async () => {
       try {
-        console.log('Tentando buscar perfil do usuário...');
-        const credentials = await Keychain.getGenericPassword();
-        if (!credentials || !credentials.password) {
+        console.log('[Home] Tentando buscar perfil do usuário...');
+
+        const token = await getToken();
+        if (!token) {
           throw new Error('Token não encontrado.');
         }
 
-        console.log('Token usado para buscar perfil:', credentials.password);
+        console.log('[Home] Token usado para buscar perfil (apenas idToken):', token);
 
         const response = await fetch(`${API_BASE_URL}/profile`, {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${credentials.password}`,
+
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
         });
 
         if (response.ok) {
           const userData = await response.json();
-          console.log('Dados do perfil:', userData);
-          setAvatar(userData.picture); // Atualiza o avatar com o valor retornado pela API
+          console.log('[Home] Dados do perfil:', userData);
+          setAvatar(userData.picture); 
         } else {
-          console.error('Erro ao buscar perfil do usuário:', response.status);
           Alert.alert('Erro', 'Não foi possível carregar o avatar do usuário.');
         }
       } catch (error) {
-        console.error('Erro ao carregar avatar:', error);
         Alert.alert('Erro', 'Ocorreu um erro ao carregar o avatar.');
       }
     };
@@ -186,14 +188,12 @@ const Home: React.FC = () => {
   useEffect(() => {
     let tempTasks = [...tasks];
 
-    // Filtra por tags selecionadas
     if (selectedTags.length > 0) {
       tempTasks = tempTasks.filter(task =>
         selectedTags.every(tag => (task.categories ?? []).includes(tag)),
       );
     }
 
-    // Filtra por data selecionada
     if (selectedDate) {
       const filterDateString = selectedDate.toISOString().split('T')[0];
 
@@ -208,7 +208,6 @@ const Home: React.FC = () => {
       });
     }
 
-    // Ordena por prioridade
     if (selectedPriority) {
       tempTasks.sort((a, b) => {
         const priorityA = a.priority ?? -1;
@@ -263,8 +262,6 @@ const Home: React.FC = () => {
       <Button
         title="CRIAR TAREFA"
         fontFamily={Fonts.Roboto60020.fontFamily}
-        fontWeight={600}
-        fontSize={Fonts.Roboto60020.fontSize}
         backgroundColor="#5B3CC4"
         textColor="#FFFFFF"
         onPress={handleOpenCreateTaskModal}
