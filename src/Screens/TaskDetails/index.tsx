@@ -79,7 +79,7 @@ const TaskDetailsScreen: React.FC<TaskDetailsProps> = ({ onTaskUpdated }) => {
                 setEditedDeadline(parsedDate);
             } else {
                 setEditedDeadline(null);
-                console.error('Data de prazo inicial inválida:', initialTask.deadline);
+                console.log('Data de prazo inicial inválida:', initialTask.deadline);
             }
         } else {
             setEditedDeadline(null);
@@ -109,13 +109,13 @@ const TaskDetailsScreen: React.FC<TaskDetailsProps> = ({ onTaskUpdated }) => {
                 if (response.ok) {
                     const userData = await response.json();
                     console.log('Dados do perfil:', userData);
-                    setAvatar(userData.picture); // Atualiza o avatar com o valor retornado pela API
+                    setAvatar(userData.picture);
                 } else {
-                    console.error('Erro ao buscar perfil do usuário:', response.status);
+                    console.log('Erro ao buscar perfil do usuário:', response.status);
                     Alert.alert('Erro', 'Não foi possível carregar o avatar do usuário.');
                 }
             } catch (error) {
-                console.error('Erro ao carregar avatar:', error);
+                console.log('Erro ao carregar avatar:', error);
                 Alert.alert('Erro', 'Ocorreu um erro ao carregar o avatar.');
             }
         };
@@ -162,7 +162,7 @@ const TaskDetailsScreen: React.FC<TaskDetailsProps> = ({ onTaskUpdated }) => {
                     onTaskUpdated(updatedTask);
                 }
             } catch (error: any) {
-                console.error('Erro ao atualizar a tarefa:', error);
+                console.log('Erro ao atualizar a tarefa:', error);
             }
         },
         [onTaskUpdated]
@@ -260,7 +260,7 @@ const TaskDetailsScreen: React.FC<TaskDetailsProps> = ({ onTaskUpdated }) => {
         const updatedTags = [...editedCategories, trimmedTag];
         setEditedCategories(updatedTags);
         setNewTag('');
-        setTagError(''); // limpa erro ao adicionar com sucesso
+        setTagError('');
     };
 
     const handleRemoveTag = (tagToRemove: string): void => {
@@ -305,7 +305,7 @@ const TaskDetailsScreen: React.FC<TaskDetailsProps> = ({ onTaskUpdated }) => {
                                                 <CategoryTag key={index} item={tag} />
                                             ))
                                         ) : (
-                                            <Text>No tags available</Text> // Caso não haja categorias
+                                            <Text>Nenhuma Tag Criada</Text>
                                         )}
                                     </View>
                                 </View>
