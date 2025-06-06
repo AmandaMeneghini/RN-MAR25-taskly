@@ -19,40 +19,28 @@ import Modal from './Modal';
 import styles from './style';
 import {API_BASE_URL} from '../../env';
 import * as Keychain from 'react-native-keychain';
+import { getS3AvatarUrl } from '../../Utils/imageUtils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const S3_AVATAR_BASE_URL = 'https://taskly-media.s3.us-east-1.amazonaws.com/';
+const avatarDefinitions = [
+  { id: 'avatar_1', borderColor: '#6C4AE4' },
+  { id: 'avatar_2', borderColor: '#E4B14A' },
+  { id: 'avatar_3', borderColor: '#4AE47B' },
+  { id: 'avatar_4', borderColor: '#E44A4A' },
+  { id: 'avatar_5', borderColor: '#B89B5B' },
+]
 
-const avatars = [
-  {
-    id: 'avatar_1',
-    source: { uri: `${S3_AVATAR_BASE_URL}avatar_1.png` },
-    borderColor: '#6C4AE4',
-  },
-  {
-    id: 'avatar_2',
-    source: { uri: `${S3_AVATAR_BASE_URL}avatar_2.png` },
-    borderColor: '#E4B14A',
-  },
-  {
-    id: 'avatar_3',
-    source: { uri: `${S3_AVATAR_BASE_URL}avatar_3.png` },
-    borderColor: '#4AE47B',
-  },
-  {
-    id: 'avatar_4',
-    source: { uri: `${S3_AVATAR_BASE_URL}avatar_4.png` },
-    borderColor: '#E44A4A',
-  },
-  {
-    id: 'avatar_5',
-    source: { uri: `${S3_AVATAR_BASE_URL}avatar_5.png` },
-    borderColor: '#B89B5B',
-  },
-];
+const avatars = avatarDefinitions.map(def => ({
+  id: def.id,
+  source: { uri: getS3AvatarUrl(def.id) },
+  borderColor: def.borderColor,
+}));
 
 const avatarSize = 100;
 const avatarMargin = 12;
 const grayBorder = '#D1D5DB';
+
+const PENDING_PROFILE_UPDATE_KEY = '@pendingProfileUpdate';
 
 export default function AvatarSelector() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -62,7 +50,11 @@ export default function AvatarSelector() {
     useNavigation<
       NativeStackNavigationProp<RootStackParamList, 'AvatarSelector'>
     >();
-  const {isEditing = false} = route.params || {};
+  const {
+    isEditing = false,
+    name: routeName,
+    phone_number: routePhoneNumber,
+  } = route.params || {};
 
   useEffect(() => {
     const backAction = () => {
@@ -89,30 +81,48 @@ export default function AvatarSelector() {
 
     try {
       const credentials = await Keychain.getGenericPassword();
-
       if (!credentials || !credentials.password) {
-        Alert.alert('Erro', 'Token não encontrado. Faça login novamente.');
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'Login'}],
-        });
-        return;
+        console.warn('[Cadastro] Nenhum token no Keychain ao tentar salvar avatar. Isso é inesperado se o registro ocorreu.');
+
+      } else {
+        let parsedTokenData;
+        try {
+          parsedTokenData = JSON.parse(credentials.password);
+        } catch (e) {
+          console.warn("[Cadastro] Conteúdo do Keychain não é JSON ao tentar adicionar avatar local:", credentials.password, e);
+          parsedTokenData = { idToken: credentials.password };
+        }
+
+        const updatedKeychainData = {
+          ...parsedTokenData,
+          avatar: selectedId,
+        };
+        await Keychain.setGenericPassword('auth', JSON.stringify(updatedKeychainData));
+        console.log('[Cadastro] Avatar salvo localmente no Keychain (com token do Admin SDK):', selectedId);
       }
-
-      const token = credentials.password;
-      await Keychain.setGenericPassword(
-        'auth',
-        JSON.stringify({idToken: token, avatar: selectedId}),
-      );
-
-      console.log('Avatar armazenado com sucesso no Keychain!', selectedId);
-
-      setIsModalVisible(true);
-    } catch (error) {
-      console.error('Erro ao processar a requisição de cadastro:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação.');
+    } catch (keychainError) {
+      console.log('[Cadastro] Erro ao tentar atualizar o Keychain localmente com avatar:', keychainError);
     }
-  };
+    
+    try {
+      const pendingUpdateData = {
+        name: routeName,
+        phone_number: routePhoneNumber ? String(routePhoneNumber).replace(/\D/g, '') : null,
+        picture: selectedId,
+        timestamp: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem(PENDING_PROFILE_UPDATE_KEY, JSON.stringify(pendingUpdateData));
+      console.log('[Cadastro] Dados do perfil (avatar, nome, telefone) salvos no AsyncStorage para atualização pós-login:', pendingUpdateData);
+      setIsModalVisible(true);
+
+    } catch (asyncStorageError) {
+      console.log('[Cadastro] Erro ao salvar dados do perfil no AsyncStorage:', asyncStorageError);
+      Alert.alert(
+        'Erro Local',
+        'Não foi possível salvar suas escolhas localmente. Por favor, tente novamente ou contate o suporte se o problema persistir.'
+      );
+    }
+  }; // CORRIGIDO: Fechamento da função handleConfirmCadastro
 
   const handleConfirmEdicao = async () => {
     if (!selectedId) {
@@ -125,52 +135,72 @@ export default function AvatarSelector() {
 
       if (!credentials || !credentials.password) {
         Alert.alert('Erro', 'Token não encontrado. Faça login novamente.');
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'Login'}],
-        });
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
         return;
       }
+      console.log('[Edição] Conteúdo bruto do Keychain (credentials.password):', credentials.password);
 
-      const token = credentials.password;
+      let parsedTokenData;
+      let idTokenForEdit;
+      try {
+        parsedTokenData = JSON.parse(credentials.password);
+        console.log('[Edição] Dados parseados do Keychain:', parsedTokenData);
+        idTokenForEdit = parsedTokenData.idToken || parsedTokenData.id_token;
+        if (!idTokenForEdit) {
+          throw new Error('idToken (ou id_token) não encontrado nos dados do Keychain para edição.');
+        }
+      } catch (e) {
+        console.log("[Edição] Erro ao parsear dados do Keychain ou idToken/id_token faltando:", credentials.password, e);
+        Alert.alert('Erro', 'Formato de token local inválido para edição.');
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        return;
+      }
+      console.log('[Edição] Usando idToken/id_token para API (Bearer):', idTokenForEdit);
 
-      const cleanedPhoneNumber = route.params?.phone_number?.replace(/\D/g, '');
+      const updatedKeychainDataForEdit = {
+        ...parsedTokenData,
+        idToken: idTokenForEdit,
+        avatar: selectedId,
+      };
+      await Keychain.setGenericPassword('auth', JSON.stringify(updatedKeychainDataForEdit));
+      console.log('[Edição] Avatar e tokens atualizados localmente no Keychain:', selectedId);
+
+      const bodyParaApiEdicao: { picture: string; name?: string; phone_number?: string } = {
+        picture: selectedId,
+      };
+      if (routeName) {
+        bodyParaApiEdicao.name = routeName;
+      }
+      if (routePhoneNumber) {
+        const phoneNumberString = String(routePhoneNumber);
+        bodyParaApiEdicao.phone_number = phoneNumberString.replace(/\D/g, '');
+      }
+      console.log('[Edição] Dados para API (PUT /profile):', JSON.stringify(bodyParaApiEdicao));
 
       const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${idTokenForEdit}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: route.params?.name,
-          phone_number: cleanedPhoneNumber,
-          picture: selectedId,
-        }),
+        body: JSON.stringify(bodyParaApiEdicao),
       });
 
-      const contentType = response.headers.get('Content-Type');
-      let responseData;
-
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await response.json();
-      } else {
-        responseData = await response.text();
-      }
+      const responseText = await response.text();
 
       if (response.ok) {
-        console.log('Perfil atualizado com sucesso!');
+        console.log('[Edição] Perfil atualizado no backend com sucesso!', responseText);
         setIsModalVisible(true);
       } else {
-        console.error('Erro ao atualizar perfil:', responseData);
+        console.log('[Edição] Erro ao atualizar perfil no backend:', response.status, responseText);
         Alert.alert(
-          'Erro',
-          responseData.error || 'Não foi possível atualizar o perfil.',
+          'Erro no Servidor (Edição)',
+          `Não foi possível atualizar o perfil. Detalhe: ${responseText || response.status}`
         );
       }
     } catch (error) {
-      console.error('Erro ao processar a requisição de edição:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação.');
+      console.log('Erro ao processar a requisição de edição:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação de edição.');
     }
   };
 
@@ -279,5 +309,4 @@ export default function AvatarSelector() {
         onClose={handleModalClose}
       />
     </View>
-  );
-}
+  )};
