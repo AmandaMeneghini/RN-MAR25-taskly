@@ -12,6 +12,7 @@ import deleteIcon from '../../Assets/icons/Trash.png';
 import logoutIcon from '../../Assets/icons/SignOut.png';
 import ConfirmationModal from '../ConfirmationModal';
 import {
+  getToken,
   removeToken,
   setBiometryEnabled,
   isBiometryEnabled,
@@ -80,7 +81,7 @@ export function CarouselActionList() {
           setCurrentModal('Mudar Biometria');
         }
       } catch (error) {
-        console.error('Erro ao verificar biometria:', error);
+        console.log('Erro ao verificar biometria:', error);
         Alert.alert(
           'Erro',
           'Não foi possível verificar o status da biometria.',
@@ -122,16 +123,17 @@ export function CarouselActionList() {
         });
       } else if (currentModal === 'Excluir Conta') {
         console.log('Iniciando exclusão de conta...');
-        const token = await Keychain.getGenericPassword();
 
-        if (!token || !token.password) {
+        const idToken = await getToken();
+
+        if (!idToken) {
           throw new Error('Token não encontrado. Faça login novamente.');
         }
 
         const response = await fetch(`${API_BASE_URL}/profile/delete-account`, {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${token.password}`,
+            Authorization: `Bearer ${idToken}`,
           },
         });
 
@@ -143,15 +145,16 @@ export function CarouselActionList() {
             routes: [{name: 'Login'}],
           });
         } else {
-          console.error('Erro ao excluir conta:', response.status);
+          const errorText = await response.text();
+          console.log('Erro ao excluir conta:', response.status, errorText);
           Alert.alert(
             'Erro',
-            'Não foi possível excluir sua conta. Tente novamente mais tarde.',
+            `Não foi possível excluir sua conta. Detalhe: ${errorText || response.status}`,
           );
         }
       }
     } catch (error) {
-      console.error(`Erro ao executar ação: ${currentModal}`, error);
+      console.log(`Erro ao executar ação: ${currentModal}`, error);
       Alert.alert('Erro', 'Não foi possível completar a ação.');
     } finally {
       setModalVisible(false);

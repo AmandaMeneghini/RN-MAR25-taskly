@@ -10,11 +10,6 @@ import {
 import axios from 'axios';
 import {API_BASE_URL} from '../../env';
 import * as Keychain from 'react-native-keychain';
-import {
-  storeToken,
-  setBiometryEnabled,
-  isBiometryEnabled,
-} from '../../Utils/authUtils';
 import styles from './style';
 import Input from '../../components/input';
 import Button from '../../components/button';
@@ -28,10 +23,52 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const checkedIcon: ImageSourcePropType = require('../../Assets/icons/CheckSquare-2.png');
 const uncheckedIcon: ImageSourcePropType = require('../../Assets/icons/CheckSquare-1.png');
 
+const PENDING_PROFILE_UPDATE_KEY = '@pendingProfileUpdate';
+
 type LoginScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'Login'
 >;
+
+const handlePendingProfileUpdate = async (idToken: string) => {
+  try {
+    const pendingDataJSON = await AsyncStorage.getItem(PENDING_PROFILE_UPDATE_KEY);
+
+    if (pendingDataJSON) {
+      console.log('[Login] Dados de perfil pendentes encontrados! Tentando atualizar o backend...');
+      const pendingData = JSON.parse(pendingDataJSON);
+
+      const response = await fetch(`${API_BASE_URL}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: pendingData.name,
+          phone_number: pendingData.phone_number,
+          picture: pendingData.picture,
+        }),
+      });
+
+      if (response.ok) {
+        console.log('[Login] Perfil pendente (do cadastro) atualizado no backend com sucesso!');
+      } else {
+        const errorText = await response.text();
+        console.log('[Login] Falha ao atualizar perfil pendente no backend:', errorText);
+      }
+
+      await AsyncStorage.removeItem(PENDING_PROFILE_UPDATE_KEY);
+      console.log('[Login] Dados de perfil pendentes removidos do AsyncStorage.');
+    } else {
+      console.log('[Login] Nenhum perfil pendente para atualizar.');
+    }
+  } catch (error) {
+    console.log('[Login] Erro ao processar atualização de perfil pendente:', error);
+    await AsyncStorage.removeItem(PENDING_PROFILE_UPDATE_KEY);
+  }
+};
+
 
 const Login: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -52,8 +89,10 @@ const Login: React.FC = () => {
         if (savedEmail) {
           setEmail(savedEmail);
           setRememberMe(true);
+          setCheckboxImage(checkedIcon);
         } else {
           setRememberMe(false);
+          setCheckboxImage(uncheckedIcon);
         }
       } catch (error) {
         console.error('Erro ao carregar e-mail salvo:', error);
@@ -104,10 +143,10 @@ const Login: React.FC = () => {
         password: 'Campo obrigatório',
       }));
       isValid = false;
-    } else if (password.length < 8) {
+    } else if (password.length < 6) {
       setErrors(prevErrors => ({
         ...prevErrors,
-        password: 'A senha deve ter no mínimo 8 caracteres',
+        password: 'A senha deve ter no mínimo 6 caracteres',
       }));
       isValid = false;
     }
@@ -123,89 +162,31 @@ const Login: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const biometryEnabled = await isBiometryEnabled();
-      console.log('Biometria ativada:', biometryEnabled);
-
-      if (biometryEnabled) {
-        console.log('Verificando credenciais biométricas...');
-        const credentials = await Keychain.getGenericPassword();
-        if (!credentials) {
-          console.log('Nenhuma credencial encontrada para biometria.');
-        } else {
-          console.log('Credenciais biométricas encontradas:', credentials);
-        }
-      } else {
-        console.log('Biometria desativada. Usuário deve fazer login manual.');
-      }
-
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password,
       });
 
-
       if (response.status === 200) {
         const {id_token, refresh_token} = response.data;
 
+        const tokenDataToStore = {
+          idToken: id_token,
+          refreshToken: refresh_token,
+        };
 
-        await storeToken(id_token, refresh_token);
-
-        if (biometryEnabled) {
-          await setBiometryEnabled(true);
-          console.log('Biometria ativada com sucesso!');
-        }
+        await Keychain.setGenericPassword('auth', JSON.stringify(tokenDataToStore));
+        console.log('[Login] Token salvo no Keychain no formato JSON correto:', tokenDataToStore);
 
         if (rememberMe) {
           await AsyncStorage.setItem('rememberedEmail', email);
-          console.log('E-mail salvo para lembrar-me:', email);
+          console.log('[Login] E-mail salvo para lembrar-me:', email);
         } else {
           await AsyncStorage.removeItem('rememberedEmail');
-          console.log('E-mail removido do lembrar-me.');
+          console.log('[Login] E-mail removido do lembrar-me.');
         }
 
-        const storedCredentials = await Keychain.getGenericPassword();
-
-        if (storedCredentials) {
-          let parsedCredentials;
-          try {
-            parsedCredentials = JSON.parse(storedCredentials.password);
-          } catch (error) {
-            parsedCredentials = {
-              idToken: storedCredentials.password,
-              refreshToken: storedCredentials.username,
-            };
-          }
-
-          const {avatar} = parsedCredentials;
-
-          if (avatar) {
-            const response = await fetch(`${API_BASE_URL}/profile`, {
-              method: 'PUT',
-              headers: {
-                Authorization: `Bearer ${id_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({picture: avatar}),
-            });
-
-            const contentType = response.headers.get('Content-Type');
-            let responseData;
-
-            if (contentType && contentType.includes('application/json')) {
-              responseData = await response.json();
-            } else {
-              responseData = await response.text();
-            }
-
-
-            if (response.ok) {
-              console.log('Avatar atualizado com sucesso!');
-            } else {
-              console.error('Erro ao atualizar avatar:', responseData);
-              throw new Error('Não foi possível atualizar o avatar.');
-            }
-          }
-        }
+        await handlePendingProfileUpdate(id_token);
 
         navigation.reset({index: 0, routes: [{name: 'MainApp'}]});
       } else {
@@ -213,6 +194,8 @@ const Login: React.FC = () => {
         setIsErrorModalVisible(true);
       }
     } catch (error) {
+
+      console.log('[Login] Erro durante o login:', error);
       setErrorMessage('E-mail e/ou senha incorretos');
       setIsErrorModalVisible(true);
     } finally {
@@ -256,8 +239,6 @@ const Login: React.FC = () => {
       <Button
         title="ENTRAR"
         fontFamily={Fonts.Roboto60020.fontFamily}
-        fontWeight={600}
-        fontSize={Fonts.Roboto60020.fontSize}
         textColor="#FFFFFF"
         backgroundColor="#5B3CC4"
         width="100%"
@@ -275,8 +256,6 @@ const Login: React.FC = () => {
       <Button
         title="CRIAR CONTA"
         fontFamily={Fonts.Roboto60020.fontFamily}
-        fontWeight={600}
-        fontSize={Fonts.Roboto60020.fontSize}
         textColor="#5B3CC4"
         borderWidth={2}
         borderColor="#5B3CC4"
