@@ -7,8 +7,7 @@ import {
   Text,
   ImageSourcePropType,
 } from 'react-native';
-import axios from 'axios';
-import {API_BASE_URL} from '../../env';
+
 import * as Keychain from 'react-native-keychain';
 import styles from './style';
 import Input from '../../components/input';
@@ -20,6 +19,9 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../navigation/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { loginUserAPI } from '../../services/authService';
+import { updateProfile } from '../../services/profileService';
+
 const checkedIcon: ImageSourcePropType = require('../../Assets/icons/CheckSquare-2.png');
 const uncheckedIcon: ImageSourcePropType = require('../../Assets/icons/CheckSquare-1.png');
 
@@ -30,7 +32,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Login'
 >;
 
-const handlePendingProfileUpdate = async (idToken: string) => {
+const handlePendingProfileUpdate = async () => {
   try {
     const pendingDataJSON = await AsyncStorage.getItem(PENDING_PROFILE_UPDATE_KEY);
 
@@ -38,25 +40,13 @@ const handlePendingProfileUpdate = async (idToken: string) => {
       console.log('[Login] Dados de perfil pendentes encontrados! Tentando atualizar o backend...');
       const pendingData = JSON.parse(pendingDataJSON);
 
-      const response = await fetch(`${API_BASE_URL}/profile`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: pendingData.name,
-          phone_number: pendingData.phone_number,
-          picture: pendingData.picture,
-        }),
+      await updateProfile({
+        name: pendingData.name,
+        phone_number: pendingData.phone_number,
+        picture: pendingData.picture,
       });
 
-      if (response.ok) {
-        console.log('[Login] Perfil pendente (do cadastro) atualizado no backend com sucesso!');
-      } else {
-        const errorText = await response.text();
-        console.log('[Login] Falha ao atualizar perfil pendente no backend:', errorText);
-      }
+      console.log('[Login] Perfil pendente (do cadastro) atualizado no backend com sucesso!');
 
       await AsyncStorage.removeItem(PENDING_PROFILE_UPDATE_KEY);
       console.log('[Login] Dados de perfil pendentes removidos do AsyncStorage.');
@@ -65,6 +55,7 @@ const handlePendingProfileUpdate = async (idToken: string) => {
     }
   } catch (error) {
     console.log('[Login] Erro ao processar atualização de perfil pendente:', error);
+
     await AsyncStorage.removeItem(PENDING_PROFILE_UPDATE_KEY);
   }
 };
@@ -126,75 +117,50 @@ const Login: React.FC = () => {
   };
 
   const validateInputs = (): boolean => {
-    console.log('Validando inputs...');
     let isValid = true;
-
-    if (!email) {
-      setErrors(prevErrors => ({...prevErrors, email: 'Campo obrigatório'}));
-      isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErrors(prevErrors => ({...prevErrors, email: 'E-mail inválido'}));
-      isValid = false;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setErrors(prev => ({...prev, email: 'E-mail inválido'}));
+        isValid = false;
     }
-
-    if (!password) {
-      setErrors(prevErrors => ({
-        ...prevErrors,
-        password: 'Campo obrigatório',
-      }));
-      isValid = false;
-    } else if (password.length < 6) {
-      setErrors(prevErrors => ({
-        ...prevErrors,
-        password: 'A senha deve ter no mínimo 6 caracteres',
-      }));
-      isValid = false;
+    if (!password || password.length < 6) {
+        setErrors(prev => ({...prev, password: 'A senha deve ter no mínimo 6 caracteres'}));
+        isValid = false;
     }
-
-    console.log('Inputs válidos:', isValid);
     return isValid;
   };
 
   const handleLogin = async () => {
+    setErrors({});
     if (!validateInputs()) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        email,
-        password,
-      });
 
-      if (response.status === 200) {
-        const {id_token, refresh_token} = response.data;
+      const response = await loginUserAPI({ email, password });
 
-        const tokenDataToStore = {
-          idToken: id_token,
-          refreshToken: refresh_token,
-        };
+      const {id_token, refresh_token} = response.data;
 
-        await Keychain.setGenericPassword('auth', JSON.stringify(tokenDataToStore));
-        console.log('[Login] Token salvo no Keychain no formato JSON correto:', tokenDataToStore);
+      const tokenDataToStore = {
+        idToken: id_token,
+        refreshToken: refresh_token,
+      };
 
-        if (rememberMe) {
-          await AsyncStorage.setItem('rememberedEmail', email);
-          console.log('[Login] E-mail salvo para lembrar-me:', email);
-        } else {
-          await AsyncStorage.removeItem('rememberedEmail');
-          console.log('[Login] E-mail removido do lembrar-me.');
-        }
+      await Keychain.setGenericPassword('auth', JSON.stringify(tokenDataToStore));
+      console.log('[Login] Token salvo no Keychain no formato JSON correto:', tokenDataToStore);
 
-        await handlePendingProfileUpdate(id_token);
-
-        navigation.reset({index: 0, routes: [{name: 'MainApp'}]});
+      if (rememberMe) {
+        await AsyncStorage.setItem('rememberedEmail', email);
       } else {
-        setErrorMessage('E-mail e/ou senha incorretos');
-        setIsErrorModalVisible(true);
+        await AsyncStorage.removeItem('rememberedEmail');
       }
-    } catch (error) {
 
+      await handlePendingProfileUpdate();
+
+      navigation.reset({index: 0, routes: [{name: 'MainApp'}]});
+
+    } catch (error) {
       console.log('[Login] Erro durante o login:', error);
       setErrorMessage('E-mail e/ou senha incorretos');
       setIsErrorModalVisible(true);
@@ -245,13 +211,7 @@ const Login: React.FC = () => {
         style={styles.buttonEnter}
         onPress={handleLogin}
         loading={isSubmitting}
-        disabled={
-          isSubmitting ||
-          !!errors.email ||
-          !!errors.password ||
-          !email ||
-          !password
-        }
+        disabled={isSubmitting}
       />
       <Button
         title="CRIAR CONTA"
