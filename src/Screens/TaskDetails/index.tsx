@@ -9,7 +9,9 @@ import {
     Platform,
     Alert,
 } from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { isValid } from 'date-fns';
 import { RootStackParamList } from '../../Navigation/types';
 import styles from './style';
 import DefaultHeader from '../../components/DefaultHeader';
@@ -25,11 +27,8 @@ import CheckedIcon from '../../Assets/icons/CheckSquare-2.png';
 import UncheckedIcon from '../../Assets/icons/CheckSquare-1.png';
 import GoldPencilIcon from '../../Assets/icons/GoldPencil.png';
 import XCircle from '../../Assets/icons/XCircle.png';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { isValid } from 'date-fns';
-import { API_BASE_URL } from '../../env';
-import * as keychain from 'react-native-keychain'
+// ADICIONADO: Importar o serviço de perfil para buscar o avatar
+import { getProfile } from '../../services/profileService';
 
 type TaskDetailsRouteProp = RouteProp<RootStackParamList, 'TaskDetails'>;
 
@@ -88,34 +87,16 @@ const TaskDetailsScreen: React.FC<TaskDetailsProps> = ({ onTaskUpdated }) => {
         setSubtasks(initialTask.subtasks || []);
     }, [initialTask]);
 
+    // MODIFICADO: A função agora usa o serviço de perfil.
     useEffect(() => {
         const loadAvatar = async () => {
             try {
-                console.log('Tentando buscar perfil do usuário...');
-                const credentials = await keychain.getGenericPassword();
-                if (!credentials || !credentials.password) {
-                    throw new Error('Token não encontrado.');
-                }
-
-                const token = credentials.password;
-
-                const response = await fetch(`${API_BASE_URL}/profile`, {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                if (response.ok) {
-                    const userData = await response.json();
-                    console.log('Dados do perfil:', userData);
-                    setAvatar(userData.picture);
-                } else {
-                    console.log('Erro ao buscar perfil do usuário:', response.status);
-                    Alert.alert('Erro', 'Não foi possível carregar o avatar do usuário.');
-                }
+                console.log('[TaskDetails] Tentando buscar perfil do usuário...');
+                const userData = await getProfile(); // A chamada agora é simples e limpa
+                console.log('[TaskDetails] Dados do perfil:', userData);
+                setAvatar(userData.picture);
             } catch (error) {
-                console.log('Erro ao carregar avatar:', error);
+                console.log('[TaskDetails] Erro ao carregar avatar:', error);
                 Alert.alert('Erro', 'Ocorreu um erro ao carregar o avatar.');
             }
         };

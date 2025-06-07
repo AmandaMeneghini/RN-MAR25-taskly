@@ -2,9 +2,7 @@ import {useState} from 'react';
 import {FlatList, View, Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import * as Keychain from 'react-native-keychain';
 import type {RootStackParamList} from '../../Navigation/types';
-import { API_BASE_URL } from '../../env';
 import {CarouselActionItem} from '../carouselActionItem';
 import userIcon from '../../Assets/icons/User.png';
 import biometryIcon from '../../Assets/icons/FingerprintSimple.png';
@@ -12,12 +10,14 @@ import deleteIcon from '../../Assets/icons/Trash.png';
 import logoutIcon from '../../Assets/icons/SignOut.png';
 import ConfirmationModal from '../ConfirmationModal';
 import {
-  getToken,
   removeToken,
   setBiometryEnabled,
   isBiometryEnabled,
 } from '../../Utils/authUtils';
+
+import { deleteAccount } from '../../services/profileService';
 import styles from './style';
+import * as Keychain from 'react-native-keychain';
 
 const actions = [
   {id: '1', title: 'Editar Informações Pessoais', icon: userIcon},
@@ -81,7 +81,7 @@ export function CarouselActionList() {
           setCurrentModal('Mudar Biometria');
         }
       } catch (error) {
-        console.log('Erro ao verificar biometria:', error);
+        console.error('Erro ao verificar biometria:', error);
         Alert.alert(
           'Erro',
           'Não foi possível verificar o status da biometria.',
@@ -122,40 +122,28 @@ export function CarouselActionList() {
           routes: [{name: 'Login'}],
         });
       } else if (currentModal === 'Excluir Conta') {
-        console.log('Iniciando exclusão de conta...');
+        console.log('Iniciando exclusão de conta via serviço...');
 
-        const idToken = await getToken();
+        await deleteAccount();
 
-        if (!idToken) {
-          throw new Error('Token não encontrado. Faça login novamente.');
-        }
-
-        const response = await fetch(`${API_BASE_URL}/profile/delete-account`, {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
+        console.log('Conta excluída com sucesso.');
+        await removeToken(); // Remove o token local
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'Login'}],
         });
-
-        if (response.ok) {
-          console.log('Conta excluída com sucesso.');
-          await removeToken();
-          navigation.reset({
-            index: 0,
-            routes: [{name: 'Login'}],
-          });
-        } else {
-          const errorText = await response.text();
-          console.log('Erro ao excluir conta:', response.status, errorText);
-          Alert.alert(
-            'Erro',
-            `Não foi possível excluir sua conta. Detalhe: ${errorText || response.status}`,
-          );
-        }
       }
-    } catch (error) {
-      console.log(`Erro ao executar ação: ${currentModal}`, error);
-      Alert.alert('Erro', 'Não foi possível completar a ação.');
+    } catch (error: any) {
+      console.error(`Erro ao executar ação: ${currentModal}`, error);
+
+      let errorMessage = 'Não foi possível completar a ação.';
+      if (error.response?.data?.error) {
+          errorMessage = `Erro: ${error.response.data.error}`;
+      } else if (error.message) {
+          errorMessage = error.message;
+      }
+
+      Alert.alert('Erro', errorMessage);
     } finally {
       setModalVisible(false);
       setCurrentModal(null);
