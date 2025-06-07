@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback} from 'react';
 import {View, KeyboardAvoidingView, ScrollView, Alert, Platform} from 'react-native';
-import { useForm, Controller } from 'react-hook-form'; // ADICIONADO
+import { useForm, Controller } from 'react-hook-form';
 import Input from '../../components/input';
 import Button from '../../components/button';
 import {useNavigation} from '@react-navigation/native';
@@ -10,7 +10,7 @@ import ProfileHeader from '../../components/ProfileHeader';
 import ProgressBar from '../../components/ProgressBar';
 import styles from './style';
 import { getProfile } from '../../services/profileService';
-import { capitalizeName, formatPhoneNumberForInput } from '../../Utils/textFormatters';
+import { capitalizeName, formatPhoneNumberForInput, cleanPhoneNumber } from '../../Utils/textFormatters';
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -54,7 +54,7 @@ function EditPersonalInfoScreen() {
 
   const onSubmit = (data: { name: string, phone: string }) => {
     const formattedName = capitalizeName(data.name);
-    const cleanedPhone = data.phone.replace(/\D/g, '');
+    const cleanedPhone = cleanPhoneNumber(data.phone);
 
     navigation.navigate('AvatarSelector', {
       name: formattedName,
@@ -122,7 +122,7 @@ function EditPersonalInfoScreen() {
             name="phone"
             rules={{
                 required: 'Campo obrigatório',
-                validate: value => value.replace(/\D/g, '').length === 11 || 'Número inválido. Deve conter 11 dígitos.',
+                validate: value => cleanPhoneNumber(value).length === 11 || 'Número inválido. Deve conter 11 dígitos.',
             }}
             render={({ field: { onChange, onBlur, value } }) => (
                 <Input

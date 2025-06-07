@@ -16,14 +16,13 @@ import { useForm, Controller } from 'react-hook-form';
 import Button from '../../components/button';
 import Input from '../../components/input';
 import BiometryModal from './BiometryResgister';
-import {registerUser} from '../../hooks/useApi';
+import { registerUserAPI } from '../../services/authService';
 import styles from './style';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../Navigation/types';
 import { storeToken } from '../../Utils/authUtils';
-import { capitalizeName, formatPhoneNumberForInput } from '../../Utils/textFormatters';
-
+import { capitalizeName, formatPhoneNumberForInput, cleanPhoneNumber } from '../../Utils/textFormatters';
 
 export default function Register() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -38,9 +37,9 @@ export default function Register() {
       confirmPassword: '',
     },
   });
-
+  
   const passwordValue = watch('password');
-
+  
   const [loading, setLoading] = useState(false);
   const [showBiometryModal, setShowBiometryModal] = useState(false);
   const [biometryApiLoading, setBiometryApiLoading] = useState(false);
@@ -48,12 +47,12 @@ export default function Register() {
   const onSubmit = async (data: any) => {
     setLoading(true);
     console.log('Iniciando cadastro com dados validados...');
-
+    
     const formattedName = capitalizeName(data.name);
-    const cleanedPhoneNumber = data.number.replace(/\D/g, '');
-
+    const cleanedPhoneNumber = cleanPhoneNumber(data.number);
+    
     try {
-      const response = await registerUser({
+      const response = await registerUserAPI({
         email: data.email,
         password: data.password,
         name: formattedName,
@@ -179,7 +178,7 @@ export default function Register() {
               name="number"
               rules={{
                 required: 'O número é obrigatório.',
-                validate: value => value.replace(/\D/g, '').length === 11 || 'Número inválido. Deve conter 11 dígitos.'
+                validate: value => cleanPhoneNumber(value).length === 11 || 'Número inválido. Deve conter 11 dígitos.'
               }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
@@ -217,7 +216,7 @@ export default function Register() {
                 />
               )}
             />
-
+            
             <Controller
               control={control}
               name="confirmPassword"
@@ -248,7 +247,7 @@ export default function Register() {
           />
         </ScrollView>
       </KeyboardAvoidingView>
-
+      
       {loading && (
         <View style={[
           StyleSheet.absoluteFill,
@@ -259,7 +258,7 @@ export default function Register() {
             zIndex: 9999,
           }
         ]}>
-          <ActivityIndicator size="large" color="#5B3CC4" />
+          <ActivityIndicator size="large" color="#FFFFFF" />
         </View>
       )}
 
@@ -278,7 +277,7 @@ export default function Register() {
               isEditing: false,
               email: formData.email,
               name: capitalizeName(formData.name),
-              phone_number: formData.number.replace(/\D/g, ''),
+              phone_number: cleanPhoneNumber(formData.number),
             });
           }
         }}
