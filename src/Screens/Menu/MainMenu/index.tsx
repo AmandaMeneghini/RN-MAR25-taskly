@@ -10,15 +10,16 @@ import {
 import {CarouselActionList} from '../../../components/carouselActionList/index';
 import Modal from '../../AvatarSelector/Modal';
 import styles from './style';
-import {API_BASE_URL} from '../../../env';
 
 import {
-  getToken,
   removeToken,
   refreshAuthToken,
 } from '../../../Utils/authUtils';
 
 import { getS3AvatarUrl } from '../../../Utils/imageUtils';
+import { formatPhoneNumberForDisplay } from '../../../Utils/textFormatters';
+import { useFocusEffect } from '@react-navigation/native';
+import { getProfile } from '../../../services/profileService';
 
 type Props = {
   navigation: any;
@@ -37,49 +38,31 @@ const MenuPrincipal = ({navigation, route}: Props) => {
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      const token = await getToken();
-
-      if (!token) {
-        throw new Error('Token não encontrado. Faça login novamente.');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/profile`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const data = await getProfile();
+      setUserData({
+        name: data.name || 'Usuário',
+        email: data.email || 'Email não disponível',
+        phone: formatPhoneNumberForDisplay(data.phone_number || ''),
+        avatarId: data.picture || '',
       });
+    } catch (error: any) {
+      console.log('[MainMenu] Erro ao buscar perfil:', error.message);
 
-      if (response.ok) {
-        const data = await response.json();
-        setUserData({
-          name: data.name || 'Usuário',
-          email: data.email || 'Email não disponível',
-          phone: data.phone_number || 'Telefone não disponível',
-          avatarId: data.picture || '',
-        });
-      } else if (response.status === 401) {
+      if (error.response?.status === 401) {
+        console.log('[MainMenu] Token pode ter expirado (401). Tentando renovar...');
         try {
-          const newToken = await refreshAuthToken();
-          const retryResponse = await fetch(`${API_BASE_URL}/profile`, {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${newToken}`,
-            },
-          });
 
-          if (retryResponse.ok) {
-            const data = await retryResponse.json();
-            setUserData({
-              name: data.name || 'Usuário',
-              email: data.email || 'Email não disponível',
-              phone: data.phone_number || 'Telefone não disponível',
-              avatarId: data.picture || '',
-            });
-          } else {
-            throw new Error('Erro ao buscar perfil com novo token.');
-          }
+          await refreshAuthToken();
+
+          const newData = await getProfile();
+          setUserData({
+            name: newData.name || 'Usuário',
+            email: newData.email || 'Email não disponível',
+            phone: formatPhoneNumberForDisplay(newData.phone_number || ''),
+            avatarId: newData.picture || '',
+          });
         } catch (refreshError) {
+          console.error('[MainMenu] Falha ao renovar o token. Deslogando.', refreshError);
           Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
           await removeToken();
           navigation.reset({
@@ -93,20 +76,15 @@ const MenuPrincipal = ({navigation, route}: Props) => {
           'Não foi possível carregar as informações do perfil.',
         );
       }
-    } catch (error) {
-      Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
-
-      await removeToken();
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'Login'}],
-      });
     }
   }, [navigation]);
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, [fetchUserProfile]);
+  useFocusEffect(
+    useCallback(() => {
+      console.log("[MainMenu] Tela focada. Buscando perfil do usuário...");
+      fetchUserProfile();
+    }, [fetchUserProfile])
+  );
 
   useEffect(() => {
     if (route.params?.showConfirmationModal && !hasShownModal) {
