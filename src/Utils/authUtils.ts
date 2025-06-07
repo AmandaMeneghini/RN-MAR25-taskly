@@ -1,7 +1,7 @@
 import * as Keychain from 'react-native-keychain';
 import {jwtDecode} from 'jwt-decode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../hooks/useApi';
+import { refreshUserTokenAPI } from '../services/authService';
 
 export const setBiometryEnabled = async (enabled: boolean) => {
   try {
@@ -32,7 +32,6 @@ export const isBiometrySupported = async (): Promise<boolean> => {
   }
 };
 
-
 export const storeToken = async (idToken: string, refreshToken?: string) => {
   try {
     if (!idToken) {
@@ -61,7 +60,6 @@ export const getToken = async (): Promise<string | null> => {
 
     try {
       const parsedData = JSON.parse(credentials.password);
-
       const token = parsedData.idToken || parsedData.id_token;
       if (!token) {
         console.warn(
@@ -73,7 +71,6 @@ export const getToken = async (): Promise<string | null> => {
       console.log('[authUtils] idToken recuperado do Keychain com sucesso.');
       return token;
     } catch (e) {
-
       console.warn(
         '[authUtils] Formato de token antigo (não-JSON) detectado em getToken. Retornando bruto.',
       );
@@ -145,8 +142,8 @@ export const refreshAuthToken = async (): Promise<string> => {
       refreshToken,
     );
 
-    const response = await api.post('/auth/refresh', {refreshToken});
-
+    const response = await refreshUserTokenAPI(refreshToken);
+    
     const {idToken, refreshToken: newRefreshToken} = response.data;
 
     await storeToken(idToken, newRefreshToken);
@@ -154,7 +151,6 @@ export const refreshAuthToken = async (): Promise<string> => {
     return idToken;
   } catch (error) {
     console.log('[authUtils] Erro ao renovar o token:', error);
-
     await removeToken();
     throw error;
   }
