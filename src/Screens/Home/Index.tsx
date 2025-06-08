@@ -1,5 +1,6 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
-import {View, FlatList, TouchableOpacity, Alert} from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { format } from 'date-fns'; // Importar a função de formatação
 import styles from './style';
 import Button from '../../components/button';
 import CreateTaskModal from '../../components/ModalCreateTask/Index';
@@ -14,13 +15,12 @@ import {
   useRoute,
   RouteProp,
 } from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootStackParamList, BottomTabParamList} from '../../Navigation/types';
-import {getTasks, saveTasks} from '../../Utils/asyncStorageUtils';
-import {Task} from '../../interfaces/task';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList, BottomTabParamList } from '../../Navigation/types';
+import { Task } from '../../interfaces/task';
 import DefaultHeader from '../../components/DefaultHeader';
-import {API_BASE_URL} from '../../env';
-import { getToken } from '../../Utils/authUtils';
+import { getProfile } from '../../services/profileService';
+import { getTasksAPI, createTaskAPI, updateTaskAPI } from '../../services/taskService';
 
 
 type PriorityType = 'lowToHigh' | 'highToLow' | null;
@@ -43,56 +43,39 @@ const Home: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<TagsType>([]);
   const [selectedDate, setSelectedDate] = useState<DateType>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadAvatar = async () => {
-      try {
-        console.log('[Home] Tentando buscar perfil do usuário...');
 
-        const token = await getToken();
-        if (!token) {
-          throw new Error('Token não encontrado.');
-        }
-
-        console.log('[Home] Token usado para buscar perfil (apenas idToken):', token);
-
-        const response = await fetch(`${API_BASE_URL}/profile`, {
-          method: 'GET',
-          headers: {
-
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const userData = await response.json();
-          console.log('[Home] Dados do perfil:', userData);
-          setAvatar(userData.picture); 
-        } else {
-          Alert.alert('Erro', 'Não foi possível carregar o avatar do usuário.');
-        }
-      } catch (error) {
-        Alert.alert('Erro', 'Ocorreu um erro ao carregar o avatar.');
-      }
-    };
-
-    loadAvatar();
+  const loadAvatar = useCallback(async () => {
+    try {
+      const userData = await getProfile();
+      setAvatar(userData.picture);
+    } catch (error) {
+      console.error('Erro ao carregar avatar:', error);
+    }
   }, []);
 
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        const storedTasks = await getTasks();
-        if (storedTasks && storedTasks.length > 0) {
-          setTasks(storedTasks);
-        }
-      } catch (error) {
-        Alert.alert('Erro', 'Não foi possível carregar as tarefas.');
-      }
-    };
-    loadTasks();
-  }, []);
+  const loadTasks = useCallback(async () => {
+    if (!tasks.length) setIsLoading(true);
+    setError(null);
+    try {
+      const apiTasks = await getTasksAPI();
+      setTasks(apiTasks);
+    } catch (err) {
+      setError('Não foi possível carregar suas tarefas.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tasks.length]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAvatar();
+      loadTasks();
+    }, [loadAvatar, loadTasks])
+  );
 
   useEffect(() => {
     const uniqueTags = new Set<string>();
@@ -102,50 +85,42 @@ const Home: React.FC = () => {
     setAllTags(Array.from(uniqueTags));
   }, [tasks]);
 
-  useEffect(() => {
-    const saveTasksToStorage = async () => {
-      try {
-        await saveTasks(tasks);
-      } catch (error) {
-        Alert.alert('Erro', 'Não foi possível salvar as tarefas.');
-      }
-    };
-    if (tasks.length > 0) {
-      saveTasksToStorage();
-    }
-  }, [tasks]);
 
   useEffect(() => {
+    if (route.params?.deletedTaskId) {
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== route.params?.deletedTaskId));
+      navigation.setParams({ deletedTaskId: undefined } as any);
+    }
+
     const scrollToTaskId = route.params?.scrollToTaskId;
     if (scrollToTaskId && filteredTasks.length > 0) {
       const index = filteredTasks.findIndex(task => task.id === scrollToTaskId);
       if (index !== -1 && flatListRef.current) {
         setTimeout(() => {
-          flatListRef.current?.scrollToIndex({index, animated: true});
+          flatListRef.current?.scrollToIndex({ index, animated: true });
         }, 500);
       }
     }
-  }, [route.params?.scrollToTaskId, filteredTasks]);
+  }, [route.params, filteredTasks, navigation]);
 
   const handleCreateTask = useCallback(
     async (taskData: {
       title: string;
       description: string;
-      deadline: string | null | undefined;
+      deadline: string | null;
     }) => {
-      const newTask: Task = {
-        ...taskData,
-        id: String(Date.now()),
-        categories: [],
-        isCompleted: false,
-        priority: 0,
-        subtasks: [],
-        createdAt: Date.now(),
-      };
-      setTasks(prevTasks => [...prevTasks, newTask]);
+      setIsCreatingTask(true);
       setIsModalVisible(false);
+      try {
+        await createTaskAPI(taskData);
+        await loadTasks();
+      } catch (err) {
+        Alert.alert('Erro', 'Não foi possível criar a tarefa.');
+      } finally {
+        setIsCreatingTask(false);
+      }
     },
-    [],
+    [loadTasks],
   );
 
   const handleOpenCreateTaskModal = () => setIsModalVisible(true);
@@ -153,25 +128,39 @@ const Home: React.FC = () => {
   const handleOpenFilterModal = () => setIsFilterModalVisible(true);
   const handleCloseFilterModal = () => setIsFilterModalVisible(false);
 
-  const handlePrioritySelect = (priority: PriorityType) =>
-    setSelectedPriority(priority);
+  const handlePrioritySelect = (priority: PriorityType) => setSelectedPriority(priority);
   const handleTagSelect = (tags: TagsType) => setSelectedTags(tags);
   const handleDateSelect = (date: DateType) => setSelectedDate(date);
 
   const handleTaskDetailsNavigation = (taskItem: Task) => {
-    navigation.navigate('TaskDetails', {task: taskItem});
+    navigation.navigate('TaskDetails', { task: taskItem });
   };
 
-  const handleToggleTaskComplete = (taskId: string) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === taskId ? {...task, isCompleted: !task.isCompleted} : task,
-      ),
-    );
+  const handleToggleTaskComplete = async (taskId: string) => {
+    const originalTasks = [...tasks];
+    let taskToUpdate: Task | undefined;
+
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        taskToUpdate = { ...task, isCompleted: !task.isCompleted };
+        return taskToUpdate;
+      }
+      return task;
+    });
+    setTasks(updatedTasks);
+
+    if (!taskToUpdate) return;
+
+    try {
+      await updateTaskAPI(taskId, taskToUpdate);
+    } catch (err) {
+      Alert.alert('Erro', 'Não foi possível sincronizar a alteração.');
+      setTasks(originalTasks);
+    }
   };
 
-  const renderTaskItem = ({item}: {item: Task}) => (
-    <TouchableOpacity onPress={() => handleTaskDetailsNavigation(item)}>
+  const renderTaskItem = ({ item }: { item: Task }) => (
+    <TouchableOpacity onPress={() => handleTaskDetailsNavigation(item)} activeOpacity={1}>
       <TaskItem
         title={item.title}
         description={item.description ?? ''}
@@ -195,16 +184,10 @@ const Home: React.FC = () => {
     }
 
     if (selectedDate) {
-      const filterDateString = selectedDate.toISOString().split('T')[0];
 
+      const filterDateString = format(selectedDate, 'dd/MM/yyyy');
       tempTasks = tempTasks.filter(task => {
-        if (!task.deadline) return false;
-
-        const taskDate = new Date(task.deadline);
-        if (isNaN(taskDate.getTime())) return false;
-
-        const taskDateString = taskDate.toISOString().split('T')[0];
-        return taskDateString === filterDateString;
+        return task.deadline === filterDateString;
       });
     }
 
@@ -212,7 +195,6 @@ const Home: React.FC = () => {
       tempTasks.sort((a, b) => {
         const priorityA = a.priority ?? -1;
         const priorityB = b.priority ?? -1;
-
         return selectedPriority === 'lowToHigh'
           ? priorityA - priorityB
           : priorityB - priorityA;
@@ -222,42 +204,51 @@ const Home: React.FC = () => {
     setFilteredTasks(tempTasks);
   }, [tasks, selectedTags, selectedDate, selectedPriority]);
 
-  useFocusEffect(
-    useCallback(() => {
-      const loadUpdatedTasks = async () => {
-        try {
-          const storedTasks = await getTasks();
-          if (storedTasks) {
-            setTasks(storedTasks);
-          }
-        } catch (error) {
-          Alert.alert('Erro', 'Não foi possível recarregar as tarefas.');
-        }
-      };
-      loadUpdatedTasks();
-    }, []),
-  );
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.containerNoTask}>
+          <ActivityIndicator size="large" color="#5B3CC4" />
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.containerNoTask}>
+          <EmptyState title="Ops! Ocorreu um erro" message={error} />
+          <Button title="Tentar Novamente" onPress={loadTasks} width={200} style={{ marginVertical: 20 }} />
+        </View>
+      );
+    }
+
+    if (tasks.length === 0) {
+      return (
+        <View style={styles.containerNoTask}>
+          <EmptyState />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.taskListContainer}>
+        <Filter onPress={handleOpenFilterModal} />
+        <FlatList
+          ref={flatListRef}
+          data={filteredTasks}
+          renderItem={renderTaskItem}
+          keyExtractor={keyExtractorTask}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <DefaultHeader avatarSource={avatar || undefined} />
 
-      {tasks.length === 0 ? (
-        <View style={styles.containerNoTask}>
-          <EmptyState />
-        </View>
-      ) : (
-        <View style={styles.taskListContainer}>
-          <Filter onPress={handleOpenFilterModal} />
-          <FlatList
-            ref={flatListRef}
-            data={filteredTasks}
-            renderItem={renderTaskItem}
-            keyExtractor={keyExtractorTask}
-            showsVerticalScrollIndicator={false}
-          />
-        </View>
-      )}
+      {renderContent()}
 
       <Button
         title="CRIAR TAREFA"
@@ -266,12 +257,15 @@ const Home: React.FC = () => {
         textColor="#FFFFFF"
         onPress={handleOpenCreateTaskModal}
         width={329}
+        disabled={isCreatingTask}
+        loading={isCreatingTask}
       />
 
       <CreateTaskModal
         visible={isModalVisible}
         onClose={handleCloseCreateTaskModal}
         onCreate={handleCreateTask}
+        loading={isCreatingTask}
       />
 
       <FilterModal

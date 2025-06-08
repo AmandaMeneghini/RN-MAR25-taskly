@@ -15,32 +15,32 @@ const Fonts: {
   Roboto40012: FontStyle;
 } = {
   Roboto70048: {
-    fontFamily: 'Roboto-Bold',
+    fontFamily: 'Roboto',
     fontSize: 48,
     fontWeight: '700',
   },
   Roboto70024: {
-    fontFamily: 'Roboto-Bold',
+    fontFamily: 'Roboto',
     fontSize: 24,
     fontWeight: '700',
   },
   Roboto60020: {
-    fontFamily: 'Roboto-SemiBold',
+    fontFamily: 'Roboto',
     fontSize: 20,
     fontWeight: '600',
   },
   Roboto50018: {
-    fontFamily: 'Roboto-Medium',
+    fontFamily: 'Roboto',
     fontSize: 18,
     fontWeight: '500',
   },
   Roboto40016: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Roboto',
     fontSize: 16,
     fontWeight: '400',
   },
   Roboto40012: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'Roboto',
     fontSize: 12,
     fontWeight: '400',
   },

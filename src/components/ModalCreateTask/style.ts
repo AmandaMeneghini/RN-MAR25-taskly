@@ -60,6 +60,10 @@ const styles = StyleSheet.create({
   },
   textinputArea:{
     marginBottom: 35,
+  },
+  disabledButton: {
+    backgroundColor: '#A08FDE',
+    opacity: 0.7,
   }
 });
 

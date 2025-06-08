@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignItems: 'center',
     width: '100%',
-  }
+  },
 });
 
 export default styles;

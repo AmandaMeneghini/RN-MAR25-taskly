@@ -3,7 +3,7 @@ import Fonts from '../../Theme/fonts';
 
 export const styles = StyleSheet.create({
   taskListContainer: {
-    overflow: 'visible', // Permite que a sombra se estenda para fora do contêiner
+    overflow: 'visible',
   },
   itemArea: {
     backgroundColor: '#FFFFFF',
