@@ -1,15 +1,24 @@
 import React from 'react';
 import {View, Text, Image} from 'react-native';
 import styles from './style';
+interface EmptyStateProps {
+  title?: string;
+  message?: string;
+}
 
-const EmptyState: React.FC = () => {
+const EmptyState: React.FC<EmptyStateProps> = ({ title, message }) => {
   return (
     <View style={styles.container}>
       <Image
         source={require('../../Assets/Images/SadFace.png')}
         resizeMode="contain"
       />
-      <Text style={styles.textNoTask}>No momento você não possui tarefa</Text>
+
+      {title && <Text style={styles.title}>{title}</Text>}
+
+      <Text style={styles.textNoTask}>
+        {message || 'No momento você não possui tarefa'}
+      </Text>
     </View>
   );
 };
