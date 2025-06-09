@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, ActivityIndicator, View } from 'react-native';
+import { Alert, ActivityIndicator, View, StatusBar } from 'react-native';
 import Keychain from 'react-native-keychain';
 import AppNavigator from './src/Navigation/index';
 import { isTokenExpired, refreshAuthToken, removeToken } from './src/Utils/authUtils';
@@ -83,7 +83,12 @@ const App: React.FC = () => {
     );
   }
 
-  return <AppNavigator isAuthenticated={isAuthenticated} />;
+  return (
+    <>
+      <StatusBar backgroundColor="#F4F4F4" barStyle="dark-content" />
+      <AppNavigator isAuthenticated={isAuthenticated} />
+    </>
+  );
 };
 
 export default App;
