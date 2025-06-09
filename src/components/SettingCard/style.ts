@@ -1,12 +1,13 @@
 import {StyleSheet} from 'react-native';
 import Fonts from '../../Theme/fonts';
+import { Theme } from '../../theme/colors';
 
-const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: theme.secundaryBG,
     padding: 24,
     height:72,
     borderRadius: 12,
@@ -17,12 +18,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   text: {
-    ...Fonts.Roboto50018
+    ...Fonts.Roboto50018,
+    color: theme.mainText,
   },
   icon: {
-    tintColor: '#000',
+    tintColor: theme.mainText,
     transform: [{rotate: '180deg'}],
   },
 });
-
-export default styles

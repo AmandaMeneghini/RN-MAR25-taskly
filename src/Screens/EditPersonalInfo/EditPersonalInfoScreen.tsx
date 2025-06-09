@@ -8,7 +8,8 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../../Navigation/types';
 import ProfileHeader from '../../components/ProfileHeader';
 import ProgressBar from '../../components/ProgressBar';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { getProfile } from '../../services/profileService';
 import { capitalizeName, formatPhoneNumberForInput, cleanPhoneNumber } from '../../Utils/textFormatters';
 
@@ -19,6 +20,7 @@ type NavigationProp = NativeStackNavigationProp<
 
 function EditPersonalInfoScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const styles = useThemedStyles(getStyles);
 
   const { control, handleSubmit, setValue, reset, formState: { errors, isValid } } = useForm({
     mode: 'onChange',
@@ -64,6 +66,7 @@ function EditPersonalInfoScreen() {
   };
 
   return (
+    
     <KeyboardAvoidingView 
         style={{flex: 1}} 
         behavior={Platform.OS === "ios" ? "padding" : "height"}

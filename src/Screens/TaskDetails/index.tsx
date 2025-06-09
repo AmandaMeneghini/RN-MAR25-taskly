@@ -16,7 +16,8 @@ import { isValid, format } from 'date-fns';
 import { SwipeListView } from 'react-native-swipe-list-view';
 
 import { RootStackParamList } from '../../Navigation/types';
-import {styles, componentStyles} from './style'; 
+import { getStyles, getComponentStyles } from './style'; //
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import DefaultHeader from '../../components/DefaultHeader';
 import CategoryTag from '../../components/CategoryTag';
 import SmallBackButton from '../../components/SmallBackButton';
@@ -38,7 +39,7 @@ type TaskDetailsRouteProp = RouteProp<RootStackParamList, 'TaskDetails'>;
 
 const SubtaskCreator = React.memo(({ onAddSubtask }: { onAddSubtask: (text: string) => void; }) => {
     const { control, handleSubmit, reset } = useForm({ defaultValues: { text: '' } });
-
+    const styles = useThemedStyles(getStyles);
     const onSubmit = (data: { text: string }) => {
         onAddSubtask(data.text);
         reset({ text: '' });
@@ -77,7 +78,8 @@ const SubtaskRow = React.memo(({
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const { control, handleSubmit } = useForm({ defaultValues: { editText: item.text } });
-
+    const styles = useThemedStyles(getStyles);
+    const componentStyles = useThemedStyles(getComponentStyles);
     const handleEditPress = () => setIsEditing(true);
 
     const onSubmitEdit = (data: { editText: string }) => {
@@ -86,6 +88,7 @@ const SubtaskRow = React.memo(({
         }
         setIsEditing(false);
     };
+
 
     if (isEditing) {
         return (
@@ -137,6 +140,8 @@ const SubtasksSection = React.memo(({
     onAdd: (text: string) => void,
 }) => {
     const [showCreator, setShowCreator] = useState(false);
+    const componentStyles = useThemedStyles(getComponentStyles);
+    const styles = useThemedStyles(getStyles);
 
     const renderItem = useCallback(({ item }: { item: Subtask }) => (
         <SubtaskRow
@@ -152,12 +157,13 @@ const SubtasksSection = React.memo(({
                 <Image source={TrashIcon} style={componentStyles.trashIcon} />
             </TouchableOpacity>
         </View>
-    ), [onDelete]);
+    ), [onDelete, componentStyles]);
 
     const handleAddSubtaskInternal = (text: string) => {
         onAdd(text);
         setShowCreator(false);
     }
+
 
     return (
         <>
@@ -205,6 +211,9 @@ const TaskDetailsScreen: React.FC = () => {
     const [tagError, setTagError] = useState('');
     const swipeableTaskRef = useRef<Swipeable>(null);
     const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'TaskDetails'>>();
+
+    const styles = useThemedStyles(getStyles);
+    const componentStyles = useThemedStyles(getComponentStyles);
 
     useEffect(() => {
         if (initialTask?.deadline) {
@@ -348,11 +357,13 @@ const TaskDetailsScreen: React.FC = () => {
     }, []);
 
     const renderDeleteAction = useCallback((progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
+
         const trans = dragX.interpolate({
             inputRange: [-80, 0],
             outputRange: [0, 80],
             extrapolate: 'clamp',
         });
+
         return (
             <TouchableOpacity style={componentStyles.deleteBox} onPress={handleDeleteTask}>
                 <Animated.View style={{ transform: [{ translateX: trans }] }}>
@@ -360,7 +371,7 @@ const TaskDetailsScreen: React.FC = () => {
                 </Animated.View>
             </TouchableOpacity>
         );
-    }, [handleDeleteTask]);
+    }, [handleDeleteTask, componentStyles]);
 
     return (
         <GestureHandlerRootView style={styles.rootView}>
@@ -436,14 +447,14 @@ const TaskDetailsScreen: React.FC = () => {
                                     Tags
                                 </Text>
                                 <View style={styles.carousel}>
-                                    {task.categories && task.categories.length > 0 ? (task.categories.map((tag, index) => (<CategoryTag key={index} item={tag} />))) : (<Text>Nenhuma Tag Criada</Text>)}
+                                    {task.categories && task.categories.length > 0 ? (task.categories.map((tag, index) => (<CategoryTag key={index} item={tag} />))) : (<Text style={styles.noTag}>Nenhuma Tag Criada</Text>)}
                                 </View>
                             </View>
                             <View>
                                 <Text style={styles.title}>
                                     Prioridade
                                 </Text>
-                                <Text style={[styles.priority, { backgroundColor: task.priority === 2 ? '#E63946' : task.priority === 1 ? '#FCA311' : '#32C25B' }]}>
+                                <Text style={styles.priority}>
                                     {mapPriorityToString(task.priority)}
                                 </Text>
                             </View>

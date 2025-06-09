@@ -17,7 +17,8 @@ import Button from '../../components/button';
 import Input from '../../components/input';
 import BiometryModal from './BiometryResgister';
 import { registerUserAPI } from '../../services/authService';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../Navigation/types';
@@ -25,6 +26,7 @@ import { storeToken } from '../../Utils/authUtils';
 import { capitalizeName, formatPhoneNumberForInput, cleanPhoneNumber } from '../../Utils/textFormatters';
 
 export default function Register() {
+  const styles = useThemedStyles(getStyles);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const { control, handleSubmit, watch, setValue, formState: { errors, isValid } } = useForm({
@@ -47,10 +49,10 @@ export default function Register() {
   const onSubmit = async (data: any) => {
     setLoading(true);
     console.log('Iniciando cadastro com dados validados...');
-    
+
     const formattedName = capitalizeName(data.name);
     const cleanedPhoneNumber = cleanPhoneNumber(data.number);
-    
+
     try {
       const response = await registerUserAPI({
         email: data.email,
@@ -121,7 +123,7 @@ export default function Register() {
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}>
-              <Image source={require('../../Assets/icons/VectorBack.png')} />
+              <Image source={require('../../Assets/icons/VectorBack.png')} style={styles.icon}/>
               <Text style={styles.backText}>VOLTAR</Text>
             </TouchableOpacity>
             <Text style={styles.title}>CADASTRO</Text>
@@ -236,8 +238,6 @@ export default function Register() {
                 />
               )}
             />
-          </View>
-
           <Button
             title="CRIAR CONTA"
             fontFamily="Roboto60020"
@@ -245,6 +245,8 @@ export default function Register() {
             onPress={handleSubmit(onSubmit)}
             disabled={loading || !isValid}
           />
+          </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
       

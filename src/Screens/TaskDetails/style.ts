@@ -1,14 +1,15 @@
 import {StyleSheet} from 'react-native';
 import Fonts from '../../Theme/fonts';
+import { Theme } from '../../theme/colors';
 
-export const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
   header: {
     paddingHorizontal: 32,
     paddingTop: 40,
   },
   rootView:{
     flex: 1,
-    backgroundColor: '#F4F4F4',
+    backgroundColor: theme.background,
   },
   container: {
     flexGrow: 1,
@@ -23,7 +24,7 @@ export const styles = StyleSheet.create({
     gap: 16,
   },
   taskDetailsContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.secundaryBG,
     padding: 24,
     gap: 16,
     borderRadius: 12,
@@ -41,21 +42,21 @@ export const styles = StyleSheet.create({
 },
   title: {
     ...Fonts.Roboto60020,
-    color: '#AAAAAA',
+    color: theme.secondaryText,
     marginBottom: 4,
   },
   titleTag: {
     ...Fonts.Roboto50018,
-    color: '#1E1E1E',
+    color: theme.mainText,
   },
   description: {
     ...Fonts.Roboto40016,
-    color: '#1E1E1E',
+    color: theme.mainText,
   },
   priority: {
     ...Fonts.Roboto40016,
     color: '#FFFFFF',
-    backgroundColor: '#32C25B',
+    backgroundColor: theme.secundaryAccent,
     padding: 4,
     alignSelf: 'flex-start',
     borderRadius: 8,
@@ -70,25 +71,25 @@ export const styles = StyleSheet.create({
   resolveButton: {
     alignItems: 'center',
     backgroundColor: 'transparent',
-    borderColor: '#5B3CC4',
+    borderColor: theme.primary,
     borderRadius: 8,
     borderWidth: 2,
     paddingVertical: 2,
   },
   resolveButtonText: {
     ...Fonts.Roboto40016,
-    color: '#5B3CC4',
+    color: theme.primary,
     textTransform: 'uppercase',
   },
   reopenButton: {
     alignItems: 'center',
-    backgroundColor: '#E63946',
+    backgroundColor: theme.erro,
     borderRadius: 8,
     paddingVertical: 2,
   },
   reopenButtonText: {
     ...Fonts.Roboto40016,
-    color: '#FFFFFF',
+    color: theme.secundaryBG,
     textTransform: 'uppercase',
   },
   addSubtaskContainer: {
@@ -97,7 +98,7 @@ export const styles = StyleSheet.create({
     marginBottom: 15,
   },
   addButton: {
-    backgroundColor: '#5B3CC4',
+    backgroundColor: theme.primary,
     paddingVertical: 4,
     borderRadius: 8,
     alignItems: 'center',
@@ -105,14 +106,14 @@ export const styles = StyleSheet.create({
   },
   addButtonText: {
     ...Fonts.Roboto40016,
-    color: '#FFFFFF',
+    color: theme.secundaryBG,
     textTransform: 'uppercase',
   },
   addSubtaskInputContainer: {
     height: 70,
   },
   confirmButton: {
-    backgroundColor: '#5B3CC4',
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     paddingHorizontal: 24.75,
     borderRadius: 8,
@@ -120,7 +121,7 @@ export const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     flex: 1,
-    backgroundColor: '#F4F4F4',
+    backgroundColor: theme.background,
   },
   scrollViewContent: {
     paddingBottom: 20,
@@ -157,16 +158,16 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#5B3CC4',
+    borderColor: theme.primary,
   },
   cancelButtonText: {
     ...Fonts.Roboto60020,
-    color: '#5B3CC4',
+    color: theme.primary,
     textTransform: 'uppercase',
   },
   confirmButtonText: {
     ...Fonts.Roboto60020,
-    color: '#FFFFFF',
+    color: theme.secundaryBG,
     textTransform: 'uppercase',
   },
   confirmButtonCircle:{
@@ -178,7 +179,7 @@ export const styles = StyleSheet.create({
   tagItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E6E0F7',
+    backgroundColor: theme.primaryLight,
     borderRadius: 8,
     padding: 4,
     gap: 4,
@@ -186,11 +187,11 @@ export const styles = StyleSheet.create({
   },
   tagText: {
     ...Fonts.Roboto40016,
-    color: '#1E1E1E',
+    color: theme.mainText,
     textTransform: 'uppercase',
   },
   removeTagButton: {
-    color: '#F44336',
+    color: theme.erro,
     fontWeight: 'bold',
     marginLeft: 5,
     fontSize: 16,
@@ -204,19 +205,19 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 25,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#5B3CC4',
+    borderColor: theme.primary,
   },
   priorityButtonActive: {
-    backgroundColor: '#32C25B',
+    backgroundColor: theme.secundaryAccent,
     borderColor: 'transparent',
   },
   priorityText: {
-    color: '#5B3CC4',
+    color: theme.primary,
     fontSize: 14,
     textTransform: 'uppercase',
   },
   priorityTextActive:{
-    color: '#FFFFFf',
+    color: theme.secundaryBG,
   },
   zeroedBottomInput:{
     marginBottom: 0,
@@ -233,6 +234,9 @@ export const styles = StyleSheet.create({
   tagsInputContainer: {
     height: 70,
     width: '100%',
+  },
+  noTag:{
+    color: theme.secondaryText,
   },
   subtaskArea: {
     width: '100%',
@@ -253,17 +257,17 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: theme.background,
     paddingVertical: 4,
   },
   subtaskText: {
     ...Fonts.Roboto40016,
-    color: '#000000',
+    color: theme.mainText,
     flexShrink: 1,
   },
   subtaskTextCompleted: {
     textDecorationLine: 'line-through',
-    color: '#999',
+    color: theme.secondaryText,
   },
   confirmEditButton:{
       padding: 8,
@@ -294,7 +298,7 @@ export const styles = StyleSheet.create({
 });
 
 
-export const componentStyles = StyleSheet.create({
+export const getComponentStyles = (theme: Theme) => StyleSheet.create({
   deleteBox: {
     backgroundColor: 'transparent',
     justifyContent: 'center',
@@ -306,10 +310,10 @@ export const componentStyles = StyleSheet.create({
   trashIcon: {
     width: 25,
     height: 25,
-    tintColor: '#000000'
+    tintColor: theme.mainText,
   },
   rowFront: {
-    backgroundColor: '#FFF',
+    backgroundColor: theme.secundaryBG,
     justifyContent: 'center',
     minHeight: 50,
     borderRadius: 12,

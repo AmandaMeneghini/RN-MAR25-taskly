@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native'
+import { Theme } from '../../../theme/colors';
 
-const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -9,7 +10,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 50,
-    backgroundColor: '#5B3CC4',
+    backgroundColor: theme.primary,
     position: 'absolute',
     zIndex: -1,
   },
@@ -19,5 +20,3 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 });
-
-export default styles;

@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import {CarouselActionList} from '../../../components/carouselActionList/index';
 import Modal from '../../AvatarSelector/Modal';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
 
 import {
   removeToken,
@@ -94,6 +95,7 @@ const MenuPrincipal = ({navigation, route}: Props) => {
   }, [route.params, hasShownModal]);
 
   const avatarSourceUri = getS3AvatarUrl(userData.avatarId, 'avatar_5');
+  const styles = useThemedStyles(getStyles);
 
   return (
     <SafeAreaView style={styles.safeArea}>

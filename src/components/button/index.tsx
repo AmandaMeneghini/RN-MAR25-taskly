@@ -8,7 +8,10 @@ import {
   DimensionValue,
   ViewStyle,
 } from 'react-native';
-import styles from './style';
+import { getStyles } from './style';
+import { useTheme } from '../../context/ThemeContext'
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+
 import Fonts from '../../Theme/fonts';
 
 interface ButtonProps {
@@ -44,8 +47,11 @@ export default function Button({
   style,
   onPress,
   loading = false,
-  
+
 }: ButtonProps) {
+  const styles = useThemedStyles(getStyles);
+  const { theme } = useTheme();
+
   return (
     <View>
       <TouchableOpacity
@@ -55,10 +61,10 @@ export default function Button({
           style,
         ]}
         onPress={onPress}
-        disabled={loading}  // Desabilitando o botão enquanto está carregando
+        disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator size="small" color={textColor || '#FFFFFF'} />
+          <ActivityIndicator size="small" color={textColor || theme.background} />
         ) : (
           <Text
             style={[
