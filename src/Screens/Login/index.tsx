@@ -9,7 +9,9 @@ import {
 } from 'react-native';
 
 import * as Keychain from 'react-native-keychain';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme } from '../../context/ThemeContext';
 import Input from '../../components/input';
 import Button from '../../components/button';
 import Fonts from '../../Theme/fonts';
@@ -72,7 +74,8 @@ const Login: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
+  const styles = useThemedStyles(getStyles);
+  const { theme, isDarkMode } = useTheme();
   useEffect(() => {
     const loadRememberedEmail = async () => {
       try {
@@ -173,11 +176,16 @@ const Login: React.FC = () => {
     navigation.navigate('Register');
   };
 
+  const logoSource = isDarkMode
+    ? require('../../Assets/Images/LogoDark.png')
+    : require('../../Assets/Images/Logo.png');
+
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.form}>
         <Image
-          source={require('../../Assets/Images/Logo.png')}
+          source={logoSource}
           style={styles.logo}
         />
         <Input
@@ -205,8 +213,8 @@ const Login: React.FC = () => {
       <Button
         title="ENTRAR"
         fontFamily={Fonts.Roboto60020.fontFamily}
-        textColor="#FFFFFF"
-        backgroundColor="#5B3CC4"
+        textColor={theme.background}
+        backgroundColor={theme.primary}
         width="100%"
         style={styles.buttonEnter}
         onPress={handleLogin}
@@ -216,9 +224,9 @@ const Login: React.FC = () => {
       <Button
         title="CRIAR CONTA"
         fontFamily={Fonts.Roboto60020.fontFamily}
-        textColor="#5B3CC4"
+        textColor={theme.primary}
         borderWidth={2}
-        borderColor="#5B3CC4"
+        borderColor={theme.primary}
         backgroundColor="transparent"
         width="100%"
         style={styles.buttonCreate}

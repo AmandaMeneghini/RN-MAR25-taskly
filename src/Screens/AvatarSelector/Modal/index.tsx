@@ -1,7 +1,9 @@
 import React from 'react';
 import {View, Text, Modal} from 'react-native';
 import Button from '../../../components/button';
-import styles from './style';
+
+import { getStyles } from './style';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
 
 type ModalProps = {
   visible: boolean;
@@ -20,6 +22,7 @@ const ConfirmationModal = ({
   confirmColor,
   onClose,
 }: ModalProps) => {
+  const styles = useThemedStyles(getStyles);
   return (
     <Modal transparent visible={visible} animationType="fade">
       <View style={styles.overlay}>

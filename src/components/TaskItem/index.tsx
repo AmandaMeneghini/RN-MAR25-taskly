@@ -1,6 +1,8 @@
 import React, { useRef, useCallback } from 'react';
 import { Text, View, TouchableOpacity, FlatList, Animated } from 'react-native';
-import { styles } from './style';
+
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import AnimatedCheck from '../AnimatedCheck';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../Navigation/types';
@@ -22,6 +24,7 @@ interface TaskItemProps {
 const TaskItem: React.FC<TaskItemProps> = ({ title, description, categories, isCompleted, onToggleComplete, task }) => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const buttonScaleValue = useRef(new Animated.Value(1)).current;
+  const styles = useThemedStyles(getStyles);
 
   const animateScale = useCallback(
     (animatedValue: Animated.Value, toValue: number, duration: number, callback?: () => void) => {

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { format } from 'date-fns'; // Importar a função de formatação
-import styles from './style';
+import { format } from 'date-fns';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme } from '../../context/ThemeContext';
 import Button from '../../components/button';
 import CreateTaskModal from '../../components/ModalCreateTask/Index';
 import EmptyState from '../../components/EmptyState';
@@ -46,7 +48,7 @@ const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const styles = useThemedStyles(getStyles);
 
   const loadAvatar = useCallback(async () => {
     try {
@@ -131,6 +133,7 @@ const Home: React.FC = () => {
   const handlePrioritySelect = (priority: PriorityType) => setSelectedPriority(priority);
   const handleTagSelect = (tags: TagsType) => setSelectedTags(tags);
   const handleDateSelect = (date: DateType) => setSelectedDate(date);
+  const { theme } = useTheme();
 
   const handleTaskDetailsNavigation = (taskItem: Task) => {
     navigation.navigate('TaskDetails', { task: taskItem });
@@ -205,10 +208,11 @@ const Home: React.FC = () => {
   }, [tasks, selectedTags, selectedDate, selectedPriority]);
 
   const renderContent = () => {
+
     if (isLoading) {
       return (
         <View style={styles.containerNoTask}>
-          <ActivityIndicator size="large" color="#5B3CC4" />
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       );
     }
@@ -253,8 +257,8 @@ const Home: React.FC = () => {
       <Button
         title="CRIAR TAREFA"
         fontFamily={Fonts.Roboto60020.fontFamily}
-        backgroundColor="#5B3CC4"
-        textColor="#FFFFFF"
+        backgroundColor={theme.primary}
+        textColor={theme.background}
         onPress={handleOpenCreateTaskModal}
         width={329}
         disabled={isCreatingTask}

@@ -1,7 +1,9 @@
 import {StyleSheet} from 'react-native';
 import Fonts from '../../../Theme/fonts';
+import { Theme } from '../../../theme/colors';
 
-const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
+
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -10,20 +12,20 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '85%',
-    backgroundColor: '#fff',
+    backgroundColor: theme.background,
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
   },
   title: {
     ...Fonts.Roboto50018,
-    color: '#1E1E1E',
+    color: theme.mainText,
     marginBottom: 10,
     alignSelf: 'flex-start',
   },
   description: {
     ...Fonts.Roboto40016,
-    color: '#1E1E1E',
+    color: theme.mainText,
     textAlign: 'left',
     marginBottom: 20,
   },
@@ -33,9 +35,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   buttonText: {
-    color: '#fff',
+    color: theme.background,
     fontWeight: 'bold',
   },
 });
-
-export default styles;

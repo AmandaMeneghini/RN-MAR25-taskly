@@ -1,7 +1,8 @@
 import { StyleSheet } from 'react-native';
 import Fonts from '../../Theme/fonts';
+import { Theme } from '../../theme/colors';
 
-const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(17, 24, 39, 0.7)', 
@@ -9,13 +10,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.background,
     borderRadius: 12,
     padding: 24,
   },
   modalTitle: {
     ...Fonts.Roboto50018,
     textAlign: 'left',
+    color: theme.mainText,
   },
 
   modalButtons: {
@@ -25,22 +27,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   cancelButton: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.background,
     borderRadius: 8,
-    borderWidth: 2,   
-    borderColor: '#5B3CC4', 
+    borderWidth: 2,
+    borderColor: theme.primary,
     width: 134.5,
     height: 37,
     alignItems: 'center',
     justifyContent:'center'
   },
   cancelText: {
-    color: '#5B3CC4',
+    color: theme.primary,
     ...Fonts.Roboto50018,
     textTransform: 'uppercase',
   },
   createButton: {
-    backgroundColor: '#5B3CC4',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     width: 134.5,
     height: 37,
@@ -48,7 +50,7 @@ const styles = StyleSheet.create({
     justifyContent:'center'
   },
   createText: {
-    color: '#fff',
+    color: theme.background,
     ...Fonts.Roboto50018,
     textTransform: 'uppercase',
   },
@@ -62,9 +64,7 @@ const styles = StyleSheet.create({
     marginBottom: 35,
   },
   disabledButton: {
-    backgroundColor: '#A08FDE',
+    backgroundColor: theme.primaryLight,
     opacity: 0.7,
   }
 });
-
-export default styles;

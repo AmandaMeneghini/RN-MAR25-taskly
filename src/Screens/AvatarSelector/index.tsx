@@ -16,7 +16,8 @@ import Button from '../../components/button';
 import ProfileHeader from '../../components/ProfileHeader';
 import ProgressBar from '../../components/ProgressBar';
 import Modal from './Modal';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import {API_BASE_URL} from '../../env';
 import * as Keychain from 'react-native-keychain';
 import { getS3AvatarUrl } from '../../Utils/imageUtils';
@@ -24,7 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const avatarDefinitions = [
   { id: 'avatar_1', borderColor: '#6C4AE4' },
-  { id: 'avatar_2', borderColor: '#E4B14A' },
+  { id: 'avatar_2', borderColor: '#D1D5DB' },
   { id: 'avatar_3', borderColor: '#4AE47B' },
   { id: 'avatar_4', borderColor: '#E44A4A' },
   { id: 'avatar_5', borderColor: '#B89B5B' },
@@ -38,13 +39,13 @@ const avatars = avatarDefinitions.map(def => ({
 
 const avatarSize = 100;
 const avatarMargin = 12;
-const grayBorder = '#D1D5DB';
 
 const PENDING_PROFILE_UPDATE_KEY = '@pendingProfileUpdate';
 
 export default function AvatarSelector() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const styles = useThemedStyles(getStyles);
   const route = useRoute<RouteProp<RootStackParamList, 'AvatarSelector'>>();
   const navigation =
     useNavigation<
@@ -122,7 +123,7 @@ export default function AvatarSelector() {
         'Não foi possível salvar suas escolhas localmente. Por favor, tente novamente ou contate o suporte se o problema persistir.'
       );
     }
-  }; // CORRIGIDO: Fechamento da função handleConfirmCadastro
+  };
 
   const handleConfirmEdicao = async () => {
     if (!selectedId) {
@@ -246,11 +247,7 @@ export default function AvatarSelector() {
               style={[
                 styles.avatarTouchable,
                 {
-                  borderColor: selectedId
-                    ? isSelected
-                      ? avatar.borderColor
-                      : grayBorder
-                    : avatar.borderColor,
+                  borderColor: avatar.borderColor,
                   borderWidth: 3,
                   borderRadius: avatarSize / 2,
                   margin: avatarMargin / 2,

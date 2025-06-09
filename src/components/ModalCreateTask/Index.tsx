@@ -8,7 +8,8 @@ import {
   Keyboard,
   ActivityIndicator,
 } from 'react-native';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import Input from '../input';
 import DateInput from '../DateInput';
 import { useForm, Controller } from 'react-hook-form';
@@ -48,6 +49,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   });
 
   const deadlineDateValue = watch('deadlineDate');
+  const styles = useThemedStyles(getStyles);
 
   useEffect(() => {
     if (!visible) {

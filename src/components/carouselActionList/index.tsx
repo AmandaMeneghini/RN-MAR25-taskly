@@ -14,9 +14,9 @@ import {
   setBiometryEnabled,
   isBiometryEnabled,
 } from '../../Utils/authUtils';
-
 import { deleteAccount } from '../../services/profileService';
 import styles from './style';
+import { useTheme } from '../../context/ThemeContext'; // Importar o hook de tema
 import * as Keychain from 'react-native-keychain';
 
 const actions = [
@@ -26,44 +26,45 @@ const actions = [
   {id: '4', title: 'Excluir Conta', icon: deleteIcon},
 ];
 
-const modalConfigs = {
-  'Sair da Conta': {
-    title: 'Deseja sair?',
-    description:
-      'Tem certeza que deseja sair do aplicativo? Você poderá se conectar novamente a qualquer momento.',
-    confirmText: 'SAIR',
-    confirmColor: '#E23C44',
-  },
-  'Excluir Conta': {
-    title: 'Excluir conta',
-    description:
-      'Tem certeza que deseja excluir sua conta? Essa ação é permanente e todos os seus dados serão perdidos.',
-    confirmText: 'EXCLUIR',
-    confirmColor: '#E23C44',
-  },
-  'Mudar Biometria': {
-    title: 'Ativar biometria',
-    description:
-      'Deseja ativar a autenticação por biometria? Isso permitirá um acesso mais rápido e seguro ao app.',
-    confirmText: 'HABILITAR',
-    confirmColor: '#32C25B',
-  },
-  'Desativar Biometria': {
-    title: 'Desativar biometria',
-    description:
-      'Tem certeza que deseja desativar o login por biometria? Você voltará a usar e‑mail e senha.',
-    confirmText: 'DESATIVAR',
-    confirmColor: '#E23C44',
-  },
-};
 
 export function CarouselActionList() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [modalVisible, setModalVisible] = useState(false);
-  const [currentModal, setCurrentModal] = useState<
-    null | keyof typeof modalConfigs
-  >(null);
+  const [currentModal, setCurrentModal] = useState<string | null>(null);
+
+  const { theme } = useTheme();
+
+  const modalConfigs = {
+    'Sair da Conta': {
+      title: 'Deseja sair?',
+      description:
+        'Tem certeza que deseja sair do aplicativo? Você poderá se conectar novamente a qualquer momento.',
+      confirmText: 'SAIR',
+      confirmColor: theme.erro,
+    },
+    'Excluir Conta': {
+      title: 'Excluir conta',
+      description:
+        'Tem certeza que deseja excluir sua conta? Essa ação é permanente e todos os seus dados serão perdidos.',
+      confirmText: 'EXCLUIR',
+      confirmColor: theme.erro,
+    },
+    'Mudar Biometria': {
+      title: 'Ativar biometria',
+      description:
+        'Deseja ativar a autenticação por biometria? Isso permitirá um acesso mais rápido e seguro ao app.',
+      confirmText: 'HABILITAR',
+      confirmColor: theme.secundaryAccent,
+    },
+    'Desativar Biometria': {
+      title: 'Desativar biometria',
+      description:
+        'Tem certeza que deseja desativar o login por biometria? Você voltará a usar e‑mail e senha.',
+      confirmText: 'DESATIVAR',
+      confirmColor: theme.erro,
+    },
+  };
 
   const handleAction = async (title: string) => {
     if (title === 'Editar Informações Pessoais') {
@@ -103,6 +104,8 @@ export function CarouselActionList() {
   };
 
   const handleConfirm = async () => {
+    if (!currentModal) return;
+
     try {
       if (currentModal === 'Mudar Biometria') {
         await Keychain.setGenericPassword('user', 'dummy_password', {
@@ -122,12 +125,9 @@ export function CarouselActionList() {
           routes: [{name: 'Login'}],
         });
       } else if (currentModal === 'Excluir Conta') {
-        console.log('Iniciando exclusão de conta via serviço...');
-
         await deleteAccount();
-
         console.log('Conta excluída com sucesso.');
-        await removeToken(); // Remove o token local
+        await removeToken();
         navigation.reset({
           index: 0,
           routes: [{name: 'Login'}],
@@ -135,14 +135,13 @@ export function CarouselActionList() {
       }
     } catch (error: any) {
       console.error(`Erro ao executar ação: ${currentModal}`, error);
-
+      
       let errorMessage = 'Não foi possível completar a ação.';
       if (error.response?.data?.error) {
           errorMessage = `Erro: ${error.response.data.error}`;
       } else if (error.message) {
           errorMessage = error.message;
       }
-
       Alert.alert('Erro', errorMessage);
     } finally {
       setModalVisible(false);
@@ -162,6 +161,8 @@ export function CarouselActionList() {
           <CarouselActionItem
             title={item.title}
             icon={item.icon}
+            // ADICIONADO: Passando a cor do tema para o ícone.
+            iconColor={theme.mainText}
             onPress={() => handleAction(item.title)}
           />
         )}
@@ -169,10 +170,10 @@ export function CarouselActionList() {
       {currentModal && (
         <ConfirmationModal
           visible={modalVisible}
-          title={modalConfigs[currentModal].title}
-          description={modalConfigs[currentModal].description}
-          confirmText={modalConfigs[currentModal].confirmText}
-          confirmColor={modalConfigs[currentModal].confirmColor}
+          title={modalConfigs[currentModal as keyof typeof modalConfigs].title}
+          description={modalConfigs[currentModal as keyof typeof modalConfigs].description}
+          confirmText={modalConfigs[currentModal as keyof typeof modalConfigs].confirmText}
+          confirmColor={modalConfigs[currentModal as keyof typeof modalConfigs].confirmColor}
           onCancel={handleCancel}
           onConfirm={handleConfirm}
         />

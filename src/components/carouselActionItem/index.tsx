@@ -1,17 +1,21 @@
-import { TouchableOpacity, Text, ImageSourcePropType, Image } from 'react-native';
-import style from './style';
+import React from 'react';
+import { TouchableOpacity, Text, ImageSourcePropType, Image} from 'react-native';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getStyles } from './style';
 
 type Props = {
     title: string;
     icon: ImageSourcePropType;
-    onPress?: () => void
+    onPress?: () => void;
+    iconColor?: string;
   };
 
-  export function CarouselActionItem({ title, icon, onPress }: Props) {
+export function CarouselActionItem({ title, icon, onPress, iconColor }: Props) {
+    const styles = useThemedStyles(getStyles);
     return (
-      <TouchableOpacity style={style.container} onPress={onPress} >
-        <Text style={style.title}>{title}</Text>
-        <Image source={icon} style={style.icon} />
+      <TouchableOpacity style={styles.container} onPress={onPress} >
+        <Image source={icon} style={[styles.icon, { tintColor: iconColor }]} />
+        <Text style={styles.title}>{title}</Text>
       </TouchableOpacity>
     );
- }
+}

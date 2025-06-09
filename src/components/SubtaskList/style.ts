@@ -1,7 +1,8 @@
 import {StyleSheet} from 'react-native';
 import Fonts from '../../Theme/fonts'
+import { Theme } from '../../theme/colors';
 
-export const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
   subtaskArea: {
     width: '100%',
     flexDirection: 'row',
@@ -22,17 +23,17 @@ export const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#CCC',
+    borderColor: theme.secondaryText,
     marginRight: 10,
   },
   subtaskText: {
     ...Fonts.Roboto40016,
-    color: '#000000',
+    color: theme.mainText,
     flexShrink: 1,
   },
   subtaskTextCompleted: {
     textDecorationLine: 'line-through',
-    color: '#999',
+    color: theme.secondaryText,
   },
   confirmEditButton:{
       position: 'absolute',

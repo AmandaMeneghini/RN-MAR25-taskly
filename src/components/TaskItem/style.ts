@@ -1,12 +1,13 @@
 import { StyleSheet } from 'react-native';
 import Fonts from '../../Theme/fonts';
+import { Theme } from '../../theme/colors';
 
-export const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
   taskListContainer: {
     overflow: 'visible',
   },
   itemArea: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.secundaryBG,
     paddingVertical: 24,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -27,9 +28,11 @@ export const styles = StyleSheet.create({
   },
   title: {
     ...Fonts.Roboto60020,
+    color: theme.mainText,
   },
   description: {
     ...Fonts.Roboto40016,
+    color: theme.mainText,
   },
   categoriesContainer: {},
   carousel: {
@@ -37,7 +40,7 @@ export const styles = StyleSheet.create({
     gap: 12,
   },
   tag: {
-    backgroundColor: '#E6E0F7',
+    backgroundColor: theme.primaryLight,
     ...Fonts.Roboto40012,
     padding: 4,
     borderRadius: 8,
@@ -48,7 +51,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   button: {
-    backgroundColor: '#5B3CC4',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     paddingVertical: 4,
     paddingHorizontal: 8,

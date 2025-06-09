@@ -1,12 +1,15 @@
 import React from 'react';
 import {View, Text, Image} from 'react-native';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 interface EmptyStateProps {
   title?: string;
   message?: string;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({ title, message }) => {
+  const styles = useThemedStyles(getStyles);
+
   return (
     <View style={styles.container}>
       <Image

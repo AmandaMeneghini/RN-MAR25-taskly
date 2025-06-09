@@ -1,9 +1,11 @@
 import {StyleSheet} from 'react-native';
 import Fonts from '../../Theme/fonts';
 
-const styles = StyleSheet.create({
+import { Theme } from '../../theme/colors';
+
+export const getStyles = (theme: Theme) => StyleSheet.create({
   tag: {
-    backgroundColor: '#E6E0F7',
+    backgroundColor: theme.primaryLight,
     ...Fonts.Roboto40016,
     padding: 4,
     borderRadius: 8,
@@ -11,5 +13,3 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 });
-
-export default styles;
