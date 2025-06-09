@@ -45,9 +45,9 @@ This project is now fully functional, with its backend API hosted on **AWS EC2**
 -   [React Navigation](https://reactnavigation.org/)
 -   [Axios](https://axios-http.com/ptbr/docs/intro)
 -   [Async Storage](https://react-native-async-storage.github.io/async-storage/)
--   [React Native Biometrics](https://github.com/fingerprintjs/react-native-biometrics)
+-   [React Native Biometrics](https://www.npmjs.com/package/react-native-biometrics)
 -   [React Native Keychain](https://github.com/oblador/react-native-keychain)
--   [Date-fns](https://date-fns.org/) & [Date-fns-tz](https://date-fns.org/tz)
+-   [Date-fns](https://www.npmjs.com/package/date-fns) & [Date-fns-tz](https://www.npmjs.com/package/date-fns-tzz)
 -   [JWT Decode](https://www.npmjs.com/package/jwt-decode)
 
 ### Backend & Infrastructure
@@ -110,7 +110,6 @@ The project has evolved to a more robust and scalable architecture. The main dir
 ├── 📁 components/     # Reusable global React components (Button, Input, Card)
 ├── 📁 config/         # Configuration files (e.g., API base URL, environment settings)
 ├── 📁 context/        # React Context API for global state management
-├── 📁 db/             # Local database configuration and models (e.g., for offline storage)
 ├── 📁 hooks/          # Custom React hooks (e.g., useApi, useAuth)
 ├── 📁 interfaces/     # TypeScript type and interface definitions
 ├── 📁 navigation/     # Navigation logic and stack definitions (React Navigation)
@@ -147,19 +146,28 @@ This project was brought to life by a dedicated team of developers and planners.
 
 | Role               | Name                            |
 | ------------------ | ------------------------------- |
-| 👑 **Presenter (P.O)** | Amanda Duarte Meneghini do Carmo|
+| 👑 **Presenter (P.O)** | [Amanda Duarte Meneghini do Carmo](https://github.com/AmandaMeneghini)|
 | 🧠 **Scrum Master** | Camila Cardozo Rocha            |
-| 💻 **Developer** | Diogo da Silva Souza            |
+| 💻 **Developer** | [Diogo da Silva Souza](https://github.com/Caoscrystal)            |
 | 💻 **Developer** | Jailson Rodrigues de Neiva      |
-| 🔍 **QA Engineer** | João Victor Santos da Costa     |
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+| 🔍 **QA Engineer** | [João Victor Santos da Costa](https://github.com/JoaoVicttor07)     |
 
 
+## Challenge proposed/developed by
+<p>
+    <img 
+      align=left 
+      margin=10 
+      width=80
+      src="https://media.licdn.com/dms/image/v2/D4D03AQEQuzbUjylR-w/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1698328855703?e=1755129600&v=beta&t=O30Cc2VfLu_FYXnhWiSJE7gjIhEXJDhSnyatVW4-Oeg"
+        alt="Imagem do perfil do LinkedIn"
+    />
+    <p>&nbsp&nbsp&nbspGabriel Santos<br>
+    &nbsp&nbsp&nbsp
+    <a href="https://www.linkedin.com/in/gabriel-santos-devjs/" target="_blank">LinkedIn</a>
+    &nbsp;&nbsp;
+    </p>
+<br><br>
 
 
 
