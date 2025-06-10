@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TextStyle } from 'react-native';
-import styles from './styles';
-
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 interface CategoryTagProps {
   item: string;
@@ -9,6 +9,7 @@ interface CategoryTagProps {
 }
 
 const CategoryTag: React.FC<CategoryTagProps> = ({ item, fontStyle }) => {
+  const styles = useThemedStyles(getStyles);
   return <Text style={[styles.tag, fontStyle]}>{item}</Text>;
 };
 

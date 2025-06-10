@@ -9,23 +9,18 @@ import {
 } from 'react-native';
 import {CarouselActionList} from '../../../components/carouselActionList/index';
 import Modal from '../../AvatarSelector/Modal';
-import styles from './style';
-import {API_BASE_URL} from '../../../env';
-// import * as Keychain from 'react-native-keychain';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
+
 import {
-  getToken,
   removeToken,
   refreshAuthToken,
 } from '../../../Utils/authUtils';
 
-const avatarMap: Record<string, any> = {
-  avatar_1: require('../../../Assets/Images/Avatars/avatar_1.png'),
-  avatar_2: require('../../../Assets/Images/Avatars/avatar_2.png'),
-  avatar_3: require('../../../Assets/Images/Avatars/avatar_3.png'),
-  avatar_4: require('../../../Assets/Images/Avatars/avatar_4.png'),
-  avatar_5: require('../../../Assets/Images/Avatars/avatar_5.png'),
-};
-
+import { getS3AvatarUrl } from '../../../Utils/imageUtils';
+import { formatPhoneNumberForDisplay } from '../../../Utils/textFormatters';
+import { useFocusEffect } from '@react-navigation/native';
+import { getProfile } from '../../../services/profileService';
 
 type Props = {
   navigation: any;
@@ -39,64 +34,36 @@ const MenuPrincipal = ({navigation, route}: Props) => {
     name: '',
     email: '',
     phone: '',
-    avatarUrl: '', // Adicionado para armazenar o avatar
+    avatarId: '',
   });
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      console.log('Tentando buscar perfil do usuário...');
-      const token = await getToken();
-
-      if (!token) {
-        throw new Error('Token não encontrado. Faça login novamente.');
-      }
-
-      console.log('Token usado para buscar perfil:', token);
-
-      const response = await fetch(`${API_BASE_URL}/profile`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const data = await getProfile();
+      setUserData({
+        name: data.name || 'Usuário',
+        email: data.email || 'Email não disponível',
+        phone: formatPhoneNumberForDisplay(data.phone_number || ''),
+        avatarId: data.picture || '',
       });
+    } catch (error: any) {
+      console.log('[MainMenu] Erro ao buscar perfil:', error.message);
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Dados do perfil:', data);
-        setUserData({
-          name: data.name || 'Usuário',
-          email: data.email || 'Email não disponível',
-          phone: data.phone_number || 'Telefone não disponível', // Atualizado para usar phone_number
-          avatarUrl: data.picture || '', // Atualizado para usar picture
-        });
-      } else if (response.status === 401) {
-        console.log('Token inválido ou expirado. Tentando renovar...');
+      if (error.response?.status === 401) {
+        console.log('[MainMenu] Token pode ter expirado (401). Tentando renovar...');
         try {
-          const newToken = await refreshAuthToken();
-          console.log('Token renovado com sucesso:', newToken);
 
-          // Tentar buscar o perfil novamente com o novo token
-          const retryResponse = await fetch(`${API_BASE_URL}/profile`, {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${newToken}`,
-            },
+          await refreshAuthToken();
+
+          const newData = await getProfile();
+          setUserData({
+            name: newData.name || 'Usuário',
+            email: newData.email || 'Email não disponível',
+            phone: formatPhoneNumberForDisplay(newData.phone_number || ''),
+            avatarId: newData.picture || '',
           });
-
-          if (retryResponse.ok) {
-            const data = await retryResponse.json();
-            console.log('Dados do perfil com novo token:', data);
-            setUserData({
-              name: data.name || 'Usuário',
-              email: data.email || 'Email não disponível',
-              phone: data.phone_number || 'Telefone não disponível',
-              avatarUrl: data.picture || '',
-            });
-          } else {
-            throw new Error('Erro ao buscar perfil com novo token.');
-          }
         } catch (refreshError) {
-          console.error('Erro ao renovar o token:', refreshError);
+          console.error('[MainMenu] Falha ao renovar o token. Deslogando.', refreshError);
           Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
           await removeToken();
           navigation.reset({
@@ -105,25 +72,20 @@ const MenuPrincipal = ({navigation, route}: Props) => {
           });
         }
       } else {
-        console.error('Erro ao buscar perfil:', response.status);
         Alert.alert(
           'Erro',
           'Não foi possível carregar as informações do perfil.',
         );
       }
-    } catch (error) {
-      console.error('Erro ao buscar perfil:', error);
-      Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'Login'}],
-      });
     }
   }, [navigation]);
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, [fetchUserProfile]);
+  useFocusEffect(
+    useCallback(() => {
+      console.log("[MainMenu] Tela focada. Buscando perfil do usuário...");
+      fetchUserProfile();
+    }, [fetchUserProfile])
+  );
 
   useEffect(() => {
     if (route.params?.showConfirmationModal && !hasShownModal) {
@@ -132,15 +94,14 @@ const MenuPrincipal = ({navigation, route}: Props) => {
     }
   }, [route.params, hasShownModal]);
 
+  const avatarSourceUri = getS3AvatarUrl(userData.avatarId, 'avatar_5');
+  const styles = useThemedStyles(getStyles);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.profileSection}>
         <Image
-          source={
-            userData.avatarUrl && avatarMap[userData.avatarUrl]
-              ? avatarMap[userData.avatarUrl]
-              : require('../../../Assets/Images/Avatars/avatar_5.png')
-          }
+          source={{ uri: avatarSourceUri }}
           style={styles.avatar}
         />
         <View style={styles.containerInfo}>

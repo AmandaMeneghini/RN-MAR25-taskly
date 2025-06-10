@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
 
 interface BiometryModalProps {
   visible: boolean;
@@ -29,6 +30,7 @@ const BiometryModal: React.FC<BiometryModalProps> = ({
   onPressRight,
   loading = false,
 }) => {
+  const styles = useThemedStyles(getStyles);
   return (
     <Modal
       visible={visible}

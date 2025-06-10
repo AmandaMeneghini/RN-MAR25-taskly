@@ -16,37 +16,46 @@ import Button from '../../components/button';
 import ProfileHeader from '../../components/ProfileHeader';
 import ProgressBar from '../../components/ProgressBar';
 import Modal from './Modal';
-import styles from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import {API_BASE_URL} from '../../env';
 import * as Keychain from 'react-native-keychain';
+import { getS3AvatarUrl } from '../../Utils/imageUtils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import avatar1 from '../../Assets/Images/Avatars/avatar_1.png';
-import avatar2 from '../../Assets/Images/Avatars/avatar_2.png';
-import avatar3 from '../../Assets/Images/Avatars/avatar_3.png';
-import avatar4 from '../../Assets/Images/Avatars/avatar_4.png';
-import avatar5 from '../../Assets/Images/Avatars/avatar_5.png';
+const avatarDefinitions = [
+  { id: 'avatar_1', borderColor: '#6C4AE4' },
+  { id: 'avatar_2', borderColor: '#D1D5DB' },
+  { id: 'avatar_3', borderColor: '#4AE47B' },
+  { id: 'avatar_4', borderColor: '#E44A4A' },
+  { id: 'avatar_5', borderColor: '#B89B5B' },
+]
 
-const AVATARS = [
-  {id: 'avatar_1', source: avatar1, borderColor: '#6C4AE4'},
-  {id: 'avatar_2', source: avatar2, borderColor: '#E4B14A'},
-  {id: 'avatar_3', source: avatar3, borderColor: '#4AE47B'},
-  {id: 'avatar_4', source: avatar4, borderColor: '#E44A4A'},
-  {id: 'avatar_5', source: avatar5, borderColor: '#B89B5B'},
-];
+const avatars = avatarDefinitions.map(def => ({
+  id: def.id,
+  source: { uri: getS3AvatarUrl(def.id) },
+  borderColor: def.borderColor,
+}));
 
-const AVATAR_SIZE = 100;
-const AVATAR_MARGIN = 12;
-const GRAY_BORDER = '#D1D5DB';
+const avatarSize = 100;
+const avatarMargin = 12;
+
+const PENDING_PROFILE_UPDATE_KEY = '@pendingProfileUpdate';
 
 export default function AvatarSelector() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const styles = useThemedStyles(getStyles);
   const route = useRoute<RouteProp<RootStackParamList, 'AvatarSelector'>>();
   const navigation =
     useNavigation<
       NativeStackNavigationProp<RootStackParamList, 'AvatarSelector'>
     >();
-  const {isEditing = false} = route.params || {};
+  const {
+    isEditing = false,
+    name: routeName,
+    phone_number: routePhoneNumber,
+  } = route.params || {};
 
   useEffect(() => {
     const backAction = () => {
@@ -71,35 +80,48 @@ export default function AvatarSelector() {
       return;
     }
 
-    console.log('API_BASE_URL:', API_BASE_URL);
-
     try {
       const credentials = await Keychain.getGenericPassword();
-
       if (!credentials || !credentials.password) {
-        Alert.alert('Erro', 'Token não encontrado. Faça login novamente.');
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'Login'}],
-        });
-        return;
+        console.warn('[Cadastro] Nenhum token no Keychain ao tentar salvar avatar. Isso é inesperado se o registro ocorreu.');
+
+      } else {
+        let parsedTokenData;
+        try {
+          parsedTokenData = JSON.parse(credentials.password);
+        } catch (e) {
+          console.warn("[Cadastro] Conteúdo do Keychain não é JSON ao tentar adicionar avatar local:", credentials.password, e);
+          parsedTokenData = { idToken: credentials.password };
+        }
+
+        const updatedKeychainData = {
+          ...parsedTokenData,
+          avatar: selectedId,
+        };
+        await Keychain.setGenericPassword('auth', JSON.stringify(updatedKeychainData));
+        console.log('[Cadastro] Avatar salvo localmente no Keychain (com token do Admin SDK):', selectedId);
       }
-
-      const token = credentials.password;
-
-      console.log('Token usado para armazenar avatar:', token);
-
-      await Keychain.setGenericPassword(
-        'auth',
-        JSON.stringify({idToken: token, avatar: selectedId}),
-      );
-
-      console.log('Avatar armazenado com sucesso!');
-
+    } catch (keychainError) {
+      console.log('[Cadastro] Erro ao tentar atualizar o Keychain localmente com avatar:', keychainError);
+    }
+    
+    try {
+      const pendingUpdateData = {
+        name: routeName,
+        phone_number: routePhoneNumber ? String(routePhoneNumber).replace(/\D/g, '') : null,
+        picture: selectedId,
+        timestamp: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem(PENDING_PROFILE_UPDATE_KEY, JSON.stringify(pendingUpdateData));
+      console.log('[Cadastro] Dados do perfil (avatar, nome, telefone) salvos no AsyncStorage para atualização pós-login:', pendingUpdateData);
       setIsModalVisible(true);
-    } catch (error) {
-      console.error('Erro ao processar a requisição:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação.');
+
+    } catch (asyncStorageError) {
+      console.log('[Cadastro] Erro ao salvar dados do perfil no AsyncStorage:', asyncStorageError);
+      Alert.alert(
+        'Erro Local',
+        'Não foi possível salvar suas escolhas localmente. Por favor, tente novamente ou contate o suporte se o problema persistir.'
+      );
     }
   };
 
@@ -109,71 +131,83 @@ export default function AvatarSelector() {
       return;
     }
 
-    console.log('API_BASE_URL:', API_BASE_URL);
-
     try {
       const credentials = await Keychain.getGenericPassword();
 
       if (!credentials || !credentials.password) {
         Alert.alert('Erro', 'Token não encontrado. Faça login novamente.');
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'Login'}],
-        });
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
         return;
       }
+      console.log('[Edição] Conteúdo bruto do Keychain (credentials.password):', credentials.password);
 
-      const token = credentials.password;
+      let parsedTokenData;
+      let idTokenForEdit;
+      try {
+        parsedTokenData = JSON.parse(credentials.password);
+        console.log('[Edição] Dados parseados do Keychain:', parsedTokenData);
+        idTokenForEdit = parsedTokenData.idToken || parsedTokenData.id_token;
+        if (!idTokenForEdit) {
+          throw new Error('idToken (ou id_token) não encontrado nos dados do Keychain para edição.');
+        }
+      } catch (e) {
+        console.log("[Edição] Erro ao parsear dados do Keychain ou idToken/id_token faltando:", credentials.password, e);
+        Alert.alert('Erro', 'Formato de token local inválido para edição.');
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        return;
+      }
+      console.log('[Edição] Usando idToken/id_token para API (Bearer):', idTokenForEdit);
 
-      const cleanedPhoneNumber = route.params?.phone_number?.replace(/\D/g, '');
+      const updatedKeychainDataForEdit = {
+        ...parsedTokenData,
+        idToken: idTokenForEdit,
+        avatar: selectedId,
+      };
+      await Keychain.setGenericPassword('auth', JSON.stringify(updatedKeychainDataForEdit));
+      console.log('[Edição] Avatar e tokens atualizados localmente no Keychain:', selectedId);
+
+      const bodyParaApiEdicao: { picture: string; name?: string; phone_number?: string } = {
+        picture: selectedId,
+      };
+      if (routeName) {
+        bodyParaApiEdicao.name = routeName;
+      }
+      if (routePhoneNumber) {
+        const phoneNumberString = String(routePhoneNumber);
+        bodyParaApiEdicao.phone_number = phoneNumberString.replace(/\D/g, '');
+      }
+      console.log('[Edição] Dados para API (PUT /profile):', JSON.stringify(bodyParaApiEdicao));
 
       const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${idTokenForEdit}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: route.params?.name,
-          phone_number: cleanedPhoneNumber,
-          picture: selectedId,
-        }),
+        body: JSON.stringify(bodyParaApiEdicao),
       });
 
-      console.log('Status da resposta:', response.status);
-
-      const contentType = response.headers.get('Content-Type');
-      let responseData;
-
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await response.json();
-      } else {
-        responseData = await response.text();
-      }
-
-      console.log('Resposta da API:', responseData);
+      const responseText = await response.text();
 
       if (response.ok) {
-        console.log('Perfil atualizado com sucesso!');
+        console.log('[Edição] Perfil atualizado no backend com sucesso!', responseText);
         setIsModalVisible(true);
       } else {
-        console.error('Erro ao atualizar perfil:', responseData);
+        console.log('[Edição] Erro ao atualizar perfil no backend:', response.status, responseText);
         Alert.alert(
-          'Erro',
-          responseData.error || 'Não foi possível atualizar o perfil.',
+          'Erro no Servidor (Edição)',
+          `Não foi possível atualizar o perfil. Detalhe: ${responseText || response.status}`
         );
       }
     } catch (error) {
-      console.error('Erro ao processar a requisição:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação.');
+      console.log('Erro ao processar a requisição de edição:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao processar sua solicitação de edição.');
     }
   };
 
   const handleModalClose = () => {
     if (!isModalVisible) return;
-
     setIsModalVisible(false);
-
     navigation.reset({
       index: 0,
       routes: [{name: isEditing ? 'MainApp' : 'Login'}],
@@ -204,7 +238,7 @@ export default function AvatarSelector() {
         <Text style={styles.textPick}>(Escolha somente um.)</Text>
       </View>
       <View style={styles.avatarsRow}>
-        {AVATARS.map(avatar => {
+        {avatars.map(avatar => {
           const isSelected = selectedId === avatar.id;
           const isDimmed = selectedId && !isSelected;
           return (
@@ -213,16 +247,14 @@ export default function AvatarSelector() {
               style={[
                 styles.avatarTouchable,
                 {
-                  borderColor: selectedId
-                    ? isSelected
-                      ? avatar.borderColor
-                      : GRAY_BORDER
-                    : avatar.borderColor,
+                  borderColor: avatar.borderColor,
                   borderWidth: 3,
-                  borderRadius: AVATAR_SIZE / 2,
-                  margin: AVATAR_MARGIN / 2,
+                  borderRadius: avatarSize / 2,
+                  margin: avatarMargin / 2,
                   overflow: 'hidden',
                   padding: 0,
+                  width: avatarSize,
+                  height: avatarSize,
                 },
               ]}
               activeOpacity={0.7}
@@ -230,12 +262,8 @@ export default function AvatarSelector() {
               <Image
                 source={avatar.source}
                 style={{
-                  position: 'absolute',
-                  left: -(AVATAR_SIZE * 0.1),
-                  top: 0,
-                  width: AVATAR_SIZE * 1.2,
-                  height: AVATAR_SIZE,
-                  borderRadius: AVATAR_SIZE / 2,
+                  width: '100%',
+                  height: '100%',
                 }}
                 resizeMode="cover"
               />
@@ -245,9 +273,8 @@ export default function AvatarSelector() {
                     position: 'absolute',
                     left: 0,
                     top: 0,
-                    width: AVATAR_SIZE * 1.2,
-                    height: AVATAR_SIZE,
-                    borderRadius: AVATAR_SIZE / 2,
+                    width: '100%',
+                    height: '100%',
                     backgroundColor: 'rgba(0,0,0,0.4)',
                   }}
                 />
@@ -279,5 +306,4 @@ export default function AvatarSelector() {
         onClose={handleModalClose}
       />
     </View>
-  );
-}
+  )};

@@ -1,5 +1,6 @@
-import React, {useState, useEffect, useCallback} from 'react';
-import {View, KeyboardAvoidingView, ScrollView, Alert} from 'react-native';
+import React, { useEffect, useCallback} from 'react';
+import {View, KeyboardAvoidingView, ScrollView, Alert, Platform} from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
 import Input from '../../components/input';
 import Button from '../../components/button';
 import {useNavigation} from '@react-navigation/native';
@@ -7,9 +8,10 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../../Navigation/types';
 import ProfileHeader from '../../components/ProfileHeader';
 import ProgressBar from '../../components/ProgressBar';
-import styles from './style';
-import {API_BASE_URL} from '../../env';
-import * as Keychain from 'react-native-keychain';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { getProfile } from '../../services/profileService';
+import { capitalizeName, formatPhoneNumberForInput, cleanPhoneNumber } from '../../Utils/textFormatters';
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -18,100 +20,57 @@ type NavigationProp = NativeStackNavigationProp<
 
 function EditPersonalInfoScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const [name, setName] = useState('');
-  const [nameError, setNameError] = useState('');
-  const [phone, setPhone] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [email, setEmail] = useState('');
+  const styles = useThemedStyles(getStyles);
+
+  const { control, handleSubmit, setValue, reset, formState: { errors, isValid } } = useForm({
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      phone: '',
+      email: '',
+    },
+  });
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      const credentials = await Keychain.getGenericPassword();
-      if (!credentials || !credentials.password) {
-        throw new Error('Token não encontrado. Faça login novamente.');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/profile`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${credentials.password}`,
-        },
+      const data = await getProfile();
+      reset({
+        email: data.email,
+        name: data.name || '',
+        phone: formatPhoneNumberForInput(data.phone_number || ''),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setEmail(data.email);
-        setName(data.name || '');
-        setPhone(data.phone_number || '');
-      } else if (response.status === 401) {
-        Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'Login'}],
-        });
-      } else {
-        Alert.alert(
-          'Erro',
-          'Não foi possível carregar as informações do perfil.',
-        );
-      }
-    } catch (error) {
+    } catch (error: any) {
+      console.log('[EditProfile] Erro em fetchUserProfile:', error);
       Alert.alert(
         'Erro',
         'Não foi possível carregar as informações do perfil. Faça login novamente.',
       );
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'Login'}],
-      });
+      navigation.reset({ index: 0, routes: [{name: 'Login'}] });
     }
-  }, [navigation]);
+  }, [navigation, reset]);
 
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
 
-  const validateName = (value: string): string | null => {
-    if (!value) {
-      return 'Campo obrigatório';
-    }
-    const parts = value.trim().split(' ').filter(Boolean);
-    if (parts.length < 2 || parts[1].length < 3) {
-      return 'Digite o nome completo';
-    }
-    return null;
-  };
+  const onSubmit = (data: { name: string, phone: string }) => {
+    const formattedName = capitalizeName(data.name);
+    const cleanedPhone = cleanPhoneNumber(data.phone);
 
-  const validatePhone = (value: string): string | null => {
-    const cleaned = value.replace(/\D/g, '');
-    if (!cleaned) {
-      return 'Campo obrigatório';
-    } else if (cleaned.length !== 11) {
-      return 'Número inválido';
-    }
-    return null;
-  };
-
-  const handleContinue = () => {
-    const localNameError = validateName(name);
-    const localPhoneError = validatePhone(phone);
-
-    setNameError(localNameError || '');
-    setPhoneError(localPhoneError || '');
-
-    if (!localNameError && !localPhoneError) {
-      const cleanedPhone = phone.replace(/\D/g, '');
-
-      navigation.navigate('AvatarSelector', {
-        name,
-        phone_number: cleanedPhone,
-        isEditing: true, // Fluxo de edição de perfil
-      });
-    }
+    navigation.navigate('AvatarSelector', {
+      name: formattedName,
+      phone_number: cleanedPhone,
+      isEditing: true,
+    });
   };
 
   return (
-    <KeyboardAvoidingView style={{flex: 1}} behavior="height">
+    
+    <KeyboardAvoidingView 
+        style={{flex: 1}} 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <ScrollView contentContainerStyle={{flexGrow: 1}}>
         <View style={styles.container}>
           <ProfileHeader
@@ -119,48 +78,76 @@ function EditPersonalInfoScreen() {
             onBackPress={() => navigation.goBack()}
           />
           <ProgressBar progress={0.5} />
-          <Input
-            label="Nome Completo"
-            value={name}
-            onChangeText={text => {
-              setName(text);
-              if (nameError) {
-                setNameError('');
+
+          <Controller
+            control={control}
+            name="name"
+            rules={{
+              required: 'Campo obrigatório',
+              validate: value => {
+                const parts = value.trim().split(' ').filter(Boolean);
+                return (parts.length >= 2 && parts[parts.length - 1].length >= 2) || 'Digite o nome completo';
               }
             }}
-            onBlur={() => setNameError(validateName(name) || '')}
-            error={nameError}
-            placeholder="Digite seu nome"
-            containerStyle={styles.inputSpacing}
+            render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Nome Completo"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={() => {
+                      onBlur();
+                      setValue('name', capitalizeName(value), { shouldValidate: true });
+                  }}
+                  error={errors.name?.message}
+                  placeholder="Digite seu nome"
+                  containerStyle={styles.inputSpacing}
+                />
+            )}
           />
-          <Input
-            label="E-mail"
-            value={email}
-            placeholder="Digite seu e-mail"
-            keyboardType="email-address"
-            containerStyle={styles.inputSpacing}
-            editable={false}
+
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { value } }) => (
+                <Input
+                  label="E-mail"
+                  value={value}
+                  placeholder="Digite seu e-mail"
+                  keyboardType="email-address"
+                  containerStyle={styles.inputSpacing}
+                  editable={false}
+                />
+            )}
           />
-          <Input
-            label="Número"
-            value={phone}
-            onChangeText={text => {
-              setPhone(text);
-              if (phoneError) {
-                setPhoneError('');
-              }
+
+          <Controller
+            control={control}
+            name="phone"
+            rules={{
+                required: 'Campo obrigatório',
+                validate: value => cleanPhoneNumber(value).length === 11 || 'Número inválido. Deve conter 11 dígitos.',
             }}
-            onBlur={() => setPhoneError(validatePhone(phone) || '')}
-            error={phoneError}
-            //  mask="phone"
-            containerStyle={styles.inputSpacing}
+            render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Número"
+                  value={value}
+                  onChangeText={(text) => onChange(formatPhoneNumberForInput(text))}
+                  onBlur={onBlur}
+                  error={errors.phone?.message}
+                  keyboardType="numeric"
+                  maxLength={17}
+                  containerStyle={styles.inputSpacing}
+                />
+            )}
           />
+
           <Button
             title="CONTINUAR"
-            onPress={handleContinue}
+            onPress={handleSubmit(onSubmit)}
             width="100%"
             fontFamily="Roboto60020"
             style={styles.buttonSpacing}
+            disabled={!isValid}
           />
         </View>
       </ScrollView>

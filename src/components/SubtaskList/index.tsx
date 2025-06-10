@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import AnimatedCheck from '../AnimatedCheck';
-import { styles } from './style';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import Input from '../input';
 import { ImageSourcePropType } from 'react-native';
 
@@ -28,6 +29,7 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const styles = useThemedStyles(getStyles);
 
   const handleEditPress = useCallback((id: string, text: string) => {
     setEditingId(id);

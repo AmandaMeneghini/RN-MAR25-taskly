@@ -1,11 +1,13 @@
 import { StyleSheet } from 'react-native';
 import Fonts from '../../Theme/fonts';
+import { Theme } from '../../theme/colors';
 
-const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
     container: {
-      padding: 30,
-      backgroundColor: '#F4F4F4',
+      padding: 32,
+      backgroundColor: theme.background,
       alignItems: 'center',
+      flexGrow: 1,
     },
     form: {
       flex: 1,
@@ -15,13 +17,13 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 13,
-      backgroundColor: '#AAAAAA',
+      backgroundColor: theme.secondaryText,
       height: 50,
       width: 110,
       borderRadius: 10,
     },
     backText: {
-      color: '#fff',
+      color: theme.background,
       ...Fonts.Roboto50018,
     },
     inputSpacing: {
@@ -36,17 +38,17 @@ const styles = StyleSheet.create({
       ...Fonts.Roboto70024,
       fontWeight: 'bold',
       alignSelf: 'center',
-      marginVertical: 20,
-      color: '#222',
+      marginVertical: 32,
+      color: theme.mainText,
     },
 
     createButton: {
-      backgroundColor: '#5B3CC4',
+      backgroundColor: theme.primary,
       width: 329,
       height:47,
       marginTop:8,
     },
-    
+    icon: {
+      tintColor: theme.background,
+    }
   });
-
-export default styles;

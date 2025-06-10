@@ -1,17 +1,18 @@
 import {StyleSheet} from 'react-native';
 
-const styles = StyleSheet.create({
+import { Theme } from '../../theme/colors';
+
+export const getStyles = (theme: Theme) => StyleSheet.create({
   container: {
     height: 4,
-    backgroundColor: '#E6E0F7',
+    backgroundColor: theme.primaryLight,
     borderRadius: 2,
     overflow: 'hidden',
     marginVertical: 16,
   },
   progress: {
     height: '100%',
-    backgroundColor: '#5B3CC4',
+    backgroundColor: theme.primary,
   },
 });
 
-export default styles;

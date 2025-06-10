@@ -55,3 +55,4 @@ const AppNavigator: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated 
 };
 
 export default AppNavigator;
+

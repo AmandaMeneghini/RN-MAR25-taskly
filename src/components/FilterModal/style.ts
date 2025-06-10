@@ -1,7 +1,8 @@
 import { StyleSheet } from 'react-native';
 import Fonts from '../../Theme/fonts';
+import { Theme } from '../../theme/colors';
 
-const styles = StyleSheet.create({
+export const getStyles = (theme: Theme) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -10,7 +11,7 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   modalContent: {
-    backgroundColor: '#F4F4F4',
+    backgroundColor: theme.background,
     padding: 24,
     borderRadius: 8,
     minHeight: 382,
@@ -55,7 +56,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14.5,
     paddingHorizontal: 8,
-    backgroundColor: '#E6E0F7',
+    backgroundColor: theme.primaryLight,
   },
   optionText: {
     ...Fonts.Roboto40016,
@@ -87,11 +88,9 @@ const styles = StyleSheet.create({
   },
   dateText: {
     ...Fonts.Roboto40016,
-    color: '#1E1E1E',
+    color: theme.background,
   },
   tagsScrollView: {
     maxHeight: 105
   }
 });
-
-export default styles

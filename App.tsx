@@ -1,57 +1,105 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, ActivityIndicator, View } from 'react-native';
+import { Alert, StatusBar, View} from 'react-native';
 import Keychain from 'react-native-keychain';
 import AppNavigator from './src/Navigation/index';
 import { isTokenExpired, refreshAuthToken, removeToken } from './src/Utils/authUtils';
+import { useTheme, ThemeProvider } from './src/context/ThemeContext';
 
-const App: React.FC = () => {
-  const [isAuthenticated, ] = useState(false);
+import SplashScreen from './src/components/SplashScreen';
+
+const AppContent: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-  const initializeApp = async () => {
-    try {
-      console.log('Inicializando o aplicativo...');
-      const credentials = await Keychain.getGenericPassword();
-      if (credentials) {
-        const { password: storedToken, username: refreshToken } = credentials;
+  const { theme, isDarkMode } = useTheme();
 
-        if (!storedToken || isTokenExpired(storedToken)) {
-          console.log('Token inválido ou expirado. Tentando renovar...');
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        console.log('[App.tsx] Inicializando o aplicativo e verificando token...');
+        const credentials = await Keychain.getGenericPassword();
+
+        if (!credentials || !credentials.password) {
+          console.log('[App.tsx] Nenhum token encontrado. Usuário não autenticado.');
+          setIsAuthenticated(false);
+          return;
+        }
+
+        let idToken: string | null = null;
+
+        try {
+          const parsedData = JSON.parse(credentials.password);
+          idToken = parsedData.idToken || parsedData.id_token;
+        } catch (e) {
+          console.warn('[App.tsx] Token em formato antigo (não-JSON) detectado. Limpando para forçar novo login.');
+          await removeToken();
+          setIsAuthenticated(false);
+          return;
+        }
+
+        if (!idToken) {
+          console.warn('[App.tsx] Token inválido encontrado. Deslogando.');
+          await removeToken();
+          setIsAuthenticated(false);
+          return;
+        }
+
+        if (isTokenExpired(idToken)) {
+          console.log('[App.tsx] Token expirado. Tentando renovar...');
           try {
-            const newToken = await refreshAuthToken();
-            await Keychain.setGenericPassword(refreshToken, newToken);
-            console.log('Token renovado com sucesso!');
-          } catch (error) {
-            console.error('Erro ao renovar o token:', error);
-            await removeToken();
+            await refreshAuthToken();
+            console.log('[App.tsx] Token renovado com sucesso!');
+            setIsAuthenticated(true);
+          } catch (refreshError) {
+            console.log('[App.tsx] Falha ao renovar o token. Deslogando usuário.', refreshError);
+            setIsAuthenticated(false);
           }
         } else {
-          console.log('Token válido encontrado.');
+          console.log('[App.tsx] Token válido encontrado. Usuário autenticado.');
+          setIsAuthenticated(true);
         }
-      } else {
-        console.log('Nenhum token encontrado.');
+      } catch (error) {
+        console.log('[App.tsx] Erro geral ao inicializar o aplicativo:', error);
+        Alert.alert('Erro', 'Não foi possível inicializar o aplicativo. Por favor, tente novamente.');
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Erro ao inicializar o aplicativo:', error);
-      Alert.alert('Erro', 'Não foi possível inicializar o aplicativo. Por favor, tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  initializeApp();
-}, []);
+    initializeApp();
+  }, []);
+
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#5B3CC4" />
+      <View style={{ flex: 1, backgroundColor: theme.background }}>
+        <StatusBar
+          backgroundColor={theme.background}
+          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        />
+        <SplashScreen />
       </View>
     );
   }
 
-  return <AppNavigator isAuthenticated={isAuthenticated} />;
+  return (
+    <>
+      <StatusBar 
+        backgroundColor={theme.background} 
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
+      />
+      <AppNavigator isAuthenticated={isAuthenticated} />
+    </>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
 };
 
 export default App;

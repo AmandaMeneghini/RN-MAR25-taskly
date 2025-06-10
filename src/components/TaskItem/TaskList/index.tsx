@@ -1,4 +1,3 @@
-// src/compoenents/TaskItem/TaskList/index.tsx
 import React, { useCallback } from 'react';
 import { View, FlatList, ListRenderItem } from 'react-native';
 import TaskItem from '../index';
@@ -7,7 +6,7 @@ import { Task } from '../../../interfaces/task';
 
 interface TaskListProps {
   tasks: Task[];
-  onToggleComplete: (taskId: string) => void; // Recebe a função do Home
+  onToggleComplete: (taskId: string) => void;
 }
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, onToggleComplete }) => {
@@ -18,7 +17,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onToggleComplete }) => {
         description={item.description}
         categories={item.categories || []}
         isCompleted={item.isCompleted}
-        onToggleComplete={() => onToggleComplete(item.id)} // Chama a função recebida
+        onToggleComplete={() => onToggleComplete(item.id)}
         task={item}
       />
     );

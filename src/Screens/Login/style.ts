@@ -1,20 +1,21 @@
-import { StyleSheet } from "react-native";
+import {StyleSheet} from 'react-native';
 
-const styles = StyleSheet.create({
+import {Theme} from '../../theme/colors';
+
+export const getStyles = (theme: Theme) =>
+  StyleSheet.create({
     container: {
       flexGrow: 1,
       padding: 32,
-      backgroundColor: '#F4F4F4',
+      backgroundColor: theme.background,
       justifyContent: 'center',
     },
-    form: {
-      
-    },
+    form: {},
     logo: {
-        width: 329,
-        height:56,
-        alignContent: 'center',
-        marginBottom: 24,
+      width: 329,
+      height: 56,
+      alignContent: 'center',
+      marginBottom: 24,
     },
     inputSpacing: {
       marginBottom: 40,
@@ -31,16 +32,12 @@ const styles = StyleSheet.create({
     },
     textCheckbox: {
       fontSize: 16,
-      color: '#1E1E1E',
+      color: theme.mainText,
     },
-   buttonEnter: {
-    marginTop: 24,
-   },
-   buttonCreate: {
-    marginTop: 24,
-   },
-  
-
-});
-
-export default styles;
+    buttonEnter: {
+      marginTop: 24,
+    },
+    buttonCreate: {
+      marginTop: 24,
+    },
+  });

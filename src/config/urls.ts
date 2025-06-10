@@ -1,0 +1,1 @@
+export const S3_AVATAR_BASE_URL = 'https://taskly-media.s3.us-east-1.amazonaws.com/';

@@ -30,13 +30,12 @@ const DateInput: React.FC<DateInputProps> = ({
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [date, setDate] = useState<Date>(initialDate ?? new Date());
 
-  // Atualiza a data quando initialDate mudar
   useEffect(() => {
     if (initialDate && isValid(initialDate)) {
       setDate(initialDate);
     } else if (initialDate !== null && initialDate !== undefined) {
       console.warn('DateInput recebeu initialDate inválido:', initialDate);
-      setDate(new Date()); // Ou outra data padrão segura
+      setDate(new Date());
     }
   }, [initialDate]);
 
@@ -45,8 +44,8 @@ const DateInput: React.FC<DateInputProps> = ({
 
   const handleConfirm = (selectedDate: Date) => {
     hideDatePicker();
-    setDate(selectedDate);  // Salva a data no estado
-    onDateChange(selectedDate);  // Passa a data para o callback
+    setDate(selectedDate);
+    onDateChange(selectedDate);
   };
 
   const formattedDate = date && isValid(date) ? format(date, 'dd/MM/yyyy', { locale: ptBR }) : '';
@@ -56,7 +55,7 @@ const DateInput: React.FC<DateInputProps> = ({
       <View>
         <Input
           label={label}
-          value={formattedDate}  // A data formatada é passada para o Input
+          value={formattedDate}
           editable={false}
           placeholder={formattedDate || 'DD/MM/YYYY'}
           error={error}
@@ -70,10 +69,10 @@ const DateInput: React.FC<DateInputProps> = ({
         <DatePicker
           modal
           open={isDatePickerVisible}
-          date={date && isValid(date) ? date : new Date()}  // A data real é passada para o DatePicker
+          date={date && isValid(date) ? date : new Date()}
           mode="date"
           locale="pt-BR"
-          onConfirm={handleConfirm}  // Confirmação do DatePicker
+          onConfirm={handleConfirm}
           onCancel={hideDatePicker}
         />
       </View>

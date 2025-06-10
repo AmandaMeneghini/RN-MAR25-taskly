@@ -8,7 +8,10 @@ import {
   ViewStyle,
   DimensionValue,
 } from 'react-native';
-import styles from './style';
+import { getStyles } from './style';
+import { useTheme } from '../../context/ThemeContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -24,9 +27,6 @@ interface InputProps extends TextInputProps {
   textColor?: string;
   mask?: 'phone' | 'none';
   validateEmail?: boolean;
-  editable?: boolean;
-  multiline?: boolean;
-  maxHeight?: DimensionValue;
 }
 
 export default function Input({
@@ -40,18 +40,23 @@ export default function Input({
   height,
   fontFamily,
   fontWeight = 'normal',
-  textColor = '#000000',
+  textColor,
   mask = 'none',
   validateEmail = false,
-  editable = true,
   ...textInputProps
 }: InputProps) {
+
+  const { theme } = useTheme();
+  const styles = useThemedStyles(getStyles);
+
   const [internalValue, setInternalValue] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
 
+  const finalTextColor = textColor ?? theme.mainText;
+
   const formatPhone = (text: string) => {
-    const cleaned = text.replace(/\D/g, ''); // Remove todos os caracteres não numéricos
-    return cleaned; // Retorna apenas os números
+    const cleaned = text.replace(/\D/g, '');
+    return cleaned;
   };
 
   const handleChange = (text: string) => {
@@ -79,7 +84,7 @@ export default function Input({
         {...textInputProps}
         value={displayValue}
         onChangeText={handleChange}
-        editable={editable}
+        placeholderTextColor={theme.secondaryText}
         style={[
           styles.input,
           inputStyle,
@@ -89,8 +94,7 @@ export default function Input({
             height,
             fontFamily,
             fontWeight,
-            color: textColor,
-            backgroundColor: editable ? '#FFFFFF' : '#F0F0F0',
+            color: finalTextColor,
           },
         ]}
         keyboardType={
@@ -103,17 +107,12 @@ export default function Input({
         }
         autoCorrect={validateEmail ? false : textInputProps.autoCorrect ?? true}
       />
-      {error != null && (
+      {(error || emailError) && (
+
         <Text style={[styles.error, errorStyle, {fontFamily, fontWeight}]}>
-          {error}
-        </Text>
-      )}
-      {emailError && (
-        <Text style={[styles.error, errorStyle, {fontFamily, fontWeight}]}>
-          {emailError}
+          {error || emailError}
         </Text>
       )}
     </View>
   );
 }
-

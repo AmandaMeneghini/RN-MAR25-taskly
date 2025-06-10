@@ -1,7 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, Image} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from './styles';
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 interface SmallBackButtonProps {
     onPress?: () => void;
@@ -9,6 +10,7 @@ interface SmallBackButtonProps {
 
 const SmallBackButton: React.FC<SmallBackButtonProps> = ({ onPress }) => {
     const navigation = useNavigation();
+    const styles = useThemedStyles(getStyles);
 
     const handlePress = () => {
         if (onPress) {
@@ -20,7 +22,7 @@ const SmallBackButton: React.FC<SmallBackButtonProps> = ({ onPress }) => {
 
     return (
         <TouchableOpacity style={styles.container} onPress={handlePress}>
-            <Image source={require('../../Assets/icons/VectorBack.png')} />
+            <Image style={styles.icon} source={require('../../Assets/icons/VectorBack.png')} />
         </TouchableOpacity>
     );
 };

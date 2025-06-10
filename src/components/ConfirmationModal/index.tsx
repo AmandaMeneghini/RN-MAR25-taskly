@@ -1,8 +1,9 @@
 import React from 'react';
 import { Modal, View, Text } from 'react-native';
 import Button from '../button'
-import styles from './style';
-
+import { getStyles } from './style';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme } from '../../context/ThemeContext';
 
 type Props = {
     visible: boolean;
@@ -25,6 +26,8 @@ export default function ConfirmationModal({
     onCancel,
     onConfirm,
 }: Props) {
+    const styles = useThemedStyles(getStyles);
+    const { theme } = useTheme();
     return(
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
@@ -35,9 +38,9 @@ export default function ConfirmationModal({
             <Button
               title={cancelText}
               fontFamily='Roboto50018'
-              backgroundColor="#fff"
-              textColor="#7b4ae4"
-              borderColor="#7b4ae4"
+              backgroundColor={theme.background}
+              textColor={theme.primary}
+              borderColor={theme.primary}
               borderWidth={2}
               width={150}
               height={40}
@@ -47,7 +50,7 @@ export default function ConfirmationModal({
               title={confirmText}
               fontFamily='Roboto50018'
               backgroundColor={confirmColor}
-              textColor="#fff"
+              textColor={theme.background}
               width={150}
               height={40}
               onPress={onConfirm}

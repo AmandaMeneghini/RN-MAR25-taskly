@@ -1,190 +1,175 @@
-# 📱 Taskly - Task App
+# 📱 Taskly - A Mobile Task Management App
 
-Taskly is a mobile task management application developed to help users organize their activities, offering a range of features including biometric authentication, setting deadlines and priorities, and profile customization. The interface of this application was developed following the design specified in the provided Figma link.
+![Project Status](https://img.shields.io/badge/status-active-success)
+![Platform](https://img.shields.io/badge/platform-React%20Native-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+Taskly is a comprehensive mobile task management application built with React Native. It empowers users to efficiently organize their daily activities through a rich feature set, including biometric authentication, task prioritization, and profile customization. The application's UI/UX was meticulously crafted based on the design specifications from [this Figma project](https://www.figma.com/design/4CRUTjHYX89xCfdUhFl8ft/Taskly-UI?node-id=0-1&p=f&t=UpMIbWXKVb1WbQdA-0).
+
+This project is now fully functional, with its backend API hosted on **AWS EC2** and user avatars stored and served via **AWS S3**.
 
 ---
 
-## 📑 Table of Contents
+## 📋 Table of Contents
 
-- [⚙️ Features](#-features)
-- [✍️ Mandatory Validations](#mandatory-validations)
-- [🛠️ Technologies Used](#️-technologies-used)
-- [📦 Installation](#-installation)
+- [✨ Key Features](#-key-features)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [🚀 Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running the App](#running-the-app)
 - [📂 Project Structure](#️-project-structure)
-- [🧩 Organization](#️-organization)
-- [🧑‍💻 Developers](#-developers)
-
-## ⚙️ Features
-
-#### 🔐 Authentication
-- Login with `Remember me` option and complete registration with validations, integrated with the proposed API.
-
-#### 🧑‍🎨 Initial Customization
-- Avatar selection upon registration and in profile editing.
-
-#### 🗂️ Task Management
-- Add, edit, and remove tasks with title, description, due date, tags, and priority.
-
-#### ✅ Detailed Subtasks
-- Divide tasks into subtasks (checklist) for detailed tracking.
-
-#### 🔍 Filtering
-- View tasks by priority (high or low).
-
-#### 📅 Organization
-- Sort tasks by due date, tags, and priority.
-
-#### 👤 Profile Editing
-- View and edit information, choose avatar, and preferences for theme selection.
+- [🏆 Project Status](#-project-status)
+- [🧑‍💻 The Team](#-the-team)
+- [📄 License](#-license)
 
 ---
 
-## ✍️ Mandatory Validations
+## ✨ Key Features
 
-#### 🔐 Login
-
-- **Email:** Valid format (regex)
-- **Password:** Minimum 8 characters
-- **Error:** "Incorrect email and/or password"
-
-#### ✍️ Sign Up
-
-- **Full Name:** Minimum two names, up to 120 characters
-- **Email:** Valid format
-- **Phone:** Format (DDD) 9 dddd-dddd
-- **Password:**
-    - 8 to 20 characters
-    - At least: 1 uppercase letter, 1 lowercase letter, 1 special character
-- **Confirmation:** Passwords must match
-
-#### 📌 Tasks
-
-- **Title:** Text only, up to 100 characters, no emojis
-- **Description:** Up to 500 characters, no emojis
-- **Due Date:** Valid date
-- **Tags:** Maximum 5, no spaces
-- **Subtasks:** Text up to 200 characters
-
-#### 👤 Profile
-
-- **Full Name:** Compound name required
-- **Phone:** (DD) 9 dddd-dddd
+-   **🔐 Secure Authentication:** Full user registration and login system with a `Remember me` option powered by biometric authentication and secure token handling.
+-   **👤 Profile Customization:** Users can select a custom avatar during registration and edit their profile information, including name, phone, and theme preferences.
+-   **🗂️ Advanced Task Management:** Create, edit, and delete tasks with detailed attributes like title, description, due date, priority level, and up to five tags.
+-   **✅ Subtask Checklists:** Break down complex tasks into smaller, manageable subtasks for detailed progress tracking.
+-   **🔍 Powerful Filtering & Sorting:** Easily find tasks by filtering by priority (high/low) or sorting by due date, tags, or priority.
+-   **☁️ Cloud-Powered:** Backend API is deployed on **AWS EC2** for reliability, and user avatars are hosted on **AWS S3** for efficient delivery.
 
 ---
 
-## 🛠️ Technologies Used
+## 🛠️ Tech Stack
 
-- [React Native](https://reactnative.dev/) - Framework for native mobile development with JavaScript.
-- [React Navigation](https://reactnavigation.org/) - Navigation between screens.
-- [Async Storage](https://react-native-async-storage.github.io/async-storage/) - Asynchronous local storage.
-- [TypeScript](https://www.typescriptlang.org/pt/docs/)
-- [Axios](https://axios-http.com/ptbr/docs/intro) - For making HTTP requests.
-- [Date-fns](https://date-fns.org/) and [Date-fns-tz](https://date-fns.org/tz) - For date and timezone manipulation.
-- [React Native Collapsible](https://github.com/oblador/react-native-collapsible) - For collapsible sections.
-- [JWT Decode](https://www.npmjs.com/package/jwt-decode) - For decoding JWT tokens.
-- [React Native Biometrics](https://github.com/fingerprintjs/react-native-biometrics) - For biometric authentication.
-- [React Native Date Picker](https://github.com/mmazzarolo/react-native-date-picker) - For date selection.
-- [React Native Keychain](https://github.com/oblador/react-native-keychain) - For secure credential storage.
-- [React Native Webview](https://github.com/react-native-webview/react-native-webview) - For displaying web content.
-- [AppCenter](https://appcenter.ms/) and its modules (Analytics, Crashes) - For app monitoring and analytics.
+### Frontend (Mobile)
+
+-   [React Native](https://reactnative.dev/)
+-   [TypeScript](https://www.typescriptlang.org/)
+-   [React Navigation](https://reactnavigation.org/)
+-   [Axios](https://axios-http.com/ptbr/docs/intro)
+-   [Async Storage](https://react-native-async-storage.github.io/async-storage/)
+-   [React Native Biometrics](https://www.npmjs.com/package/react-native-biometrics)
+-   [React Native Keychain](https://github.com/oblador/react-native-keychain)
+-   [Date-fns](https://www.npmjs.com/package/date-fns) & [Date-fns-tz](https://www.npmjs.com/package/date-fns-tzz)
+-   [JWT Decode](https://www.npmjs.com/package/jwt-decode)
+
+### Backend & Infrastructure
+
+-   **Runtime:** Node.js with Express.js (Assumed for API)
+-   **Compute:** AWS EC2
+-   **Storage:** AWS S3 for media assets
+-   **Monitoring:** AppCenter (Analytics & Crashes)
 
 ---
 
-## 📦 Installation
+## 🚀 Getting Started
 
-#### Clone the repository
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+
+-   Node.js (v18 or later recommended)
+-   NPM or Yarn
+-   Android Studio or Xcode for running the mobile application
+-   Git
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/AmandaMeneghini/RN-MAR25-taskly.git
+    ```
+    ```
+    cd RN-MAR25-taskly
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
 
-```bash
-git clone https://github.com/JoaoVicttor07/RN-MAR25-taskly.git
-cd RN-MAR25-taskly
-```
+### Running the App
 
-#### Install dependencies
-```bash
-npm install
-```
+1.  **Start the Metro server:**
+    ```bash
+    npm start
+    ```
 
-#### Start the Server
-```bash
-npm start
-```
-
-#### Run the application
-```bash
-npm run android
-```
+2.  **Run on Android platform (in a new terminal):**
+    ```bash
+    npm run android
+    ```
 
 ---
 
 ## 📂 Project Structure
-The file and folder structure of the project is organized as follows:
-```
-📁 src                         # Main source code
-├── 📁 Assets                  # Static files
-│   ├── 📁 Images              # Image files
-│   ├── 📁 fonts               # Font files
-│   └── 📁 icons               # Icon files
-│
-├── 📁 Navigation              # Application navigation logic
-│       ├── index.tsx
-│       └── types.ts
-│
-├── 📁 Screens                  # Application screens
-│   ├── 📁 Home                 # Main application screen
-│   │   ├── Index.tsx            # Home screen component
-│   │   └── style.ts             # Styles for the Home screen
-│   └── 📁 Login                 # Login screen
-│       ├── 📁 Modal             # Specific modal component for the Login screen
-│       │   ├── Index.tsx         # Login modal component
-│       │   └── style.ts          # Styles for the Login modal
-│       ├── Index.tsx             # Login screen component
-│       └── style.ts              # Styles for the Login screen
-│
-├── 📁 Theme                     # Theme definitions for the application
-│   └── fonts.ts                  # Font styles and configurations
-│
-├── 📁 Utils                     # Reusable utility functions
-│   ├── authUtils.ts              # Functions related to authentication
-│   └── validateDate.ts           # Functions to validate dates
-│
-├── 📁 components                # Reusable React components
-│   ├── 📁 button                # Custom button component
-│   │   ├── index.tsx             # Button component
-│   │   └── style.ts              # Styles for the button component
-│   └── 📁 input                 # Custom input component
-│       ├── index.tsx             # Input component
-│       └── style.ts              # Styles for the input component
-│
-├── 📁 hooks                     # Custom React hooks
-│   └── useApi.ts                 # Hook to interact with an API
-│
-├── 📁 screens/Notifications     # Notifications screen
-│   ├── index.tsx                 # Notifications screen component
-│   └── style.ts                  # Styles for the notifications screen
-│
-└── App.tsx                       # Main entry point of the React Native application
+
+The project has evolved to a more robust and scalable architecture. The main directories under `src/` are organized as follows:
 
 ```
+📁 src/
+├── 📁 assets/         # Static assets (images, fonts, icons)
+├── 📁 components/     # Reusable global React components (Button, Input, Card)
+├── 📁 config/         # Configuration files (e.g., API base URL, environment settings)
+├── 📁 context/        # React Context API for global state management
+├── 📁 hooks/          # Custom React hooks (e.g., useApi, useAuth)
+├── 📁 interfaces/     # TypeScript type and interface definitions
+├── 📁 navigation/     # Navigation logic and stack definitions (React Navigation)
+├── 📁 screens/        # All application screens, organized by feature
+├── 📁 services/       # API communication layer (Axios instances, endpoint functions)
+├── 📁 theme/          # Global theme definitions (colors, fonts, spacing)
+└── 📁 utils/          # Utility functions for specific domains
+    ├── 📄 authUtils.ts
+    ├── 📄 imageUtils.ts
+    ├── 📄 textFormatters.ts
+    └── 📄 validateDate.ts
+```
 
-## 🧩 Organization
+---
 
-The development team for this project is organized as follows:
+## 🏆 Project Status
 
-- **Presenter (P.O):** Amanda Duarte Meneghini do Carmo
-- **Developer (Dev):** Diogo da Silva Souza
-- **Developer (Dev):** Jailson Rodrigues de Neiva
-- **Quality Assurance (QA):** João Victor Santos da Costa
-- **Scrum Master:** Camila Cardozo Rocha
+This project is functionally complete. All core features listed above have been implemented and are working as expected.
+
+- [x] Authentication (Login, Register, Biometrics)
+- [x] Task Management (CRUD)
+- [x] Subtask Management
+- [x] Profile Editing
+- [x] Task Filtering and Sorting
+- [x] Backend integration with AWS EC2 and S3
+
+The only planned feature that has not been implemented is **offline-first support**.
+
+---
+
+## 🧑‍💻 The Team
+
+This project was brought to life by a dedicated team of developers and planners.
+
+| Role               | Name                            |
+| ------------------ | ------------------------------- |
+| 👑 **Presenter (P.O)** | [Amanda Duarte Meneghini do Carmo](https://github.com/AmandaMeneghini)|
+| 🧠 **Scrum Master** | Camila Cardozo Rocha            |
+| 💻 **Developer** | [Diogo da Silva Souza](https://github.com/Caoscrystal)            |
+| 💻 **Developer** | Jailson Rodrigues de Neiva      |
+| 🔍 **QA Engineer** | [João Victor Santos da Costa](https://github.com/JoaoVicttor07)     |
 
 
-## 🧑‍💻 Developers
+## Challenge proposed/developed by
+<p>
+    <img 
+      align=left 
+      margin=10 
+      width=80
+      src="https://media.licdn.com/dms/image/v2/D4D03AQEQuzbUjylR-w/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1698328855703?e=1755129600&v=beta&t=O30Cc2VfLu_FYXnhWiSJE7gjIhEXJDhSnyatVW4-Oeg"
+        alt="Imagem do perfil do LinkedIn"
+    />
+    <p>&nbsp&nbsp&nbspGabriel Santos<br>
+    &nbsp&nbsp&nbsp
+    <a href="https://www.linkedin.com/in/gabriel-santos-devjs/" target="_blank">LinkedIn</a>
+    &nbsp;&nbsp;
+    </p>
+<br><br>
 
-This project was developed by a team of dedicated collaborators:
 
-- Amanda Duarte Meneghini do Carmo
-- Camila Cardozo Rocha
-- Diogo da Silva Souza
-- Jailson Rodrigues de Neiva
-- João Victor Santos da Costa
+
+
 
