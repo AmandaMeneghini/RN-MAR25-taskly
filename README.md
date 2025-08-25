@@ -1,4 +1,10 @@
-# 📱 Taskly - A Mobile Task Management App
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="src/Assets/Images/LogoDark.png">
+  <source media="(prefers-color-scheme: light)" srcset="src/Assets/Images/Logo.png">
+  <img width="800px" alt="Logo Taskly image" src="src/Assets/Images/LogoDark.png" align="center">
+</picture>
+
+# A Mobile Task Management App
 
 ![Project Status](https://img.shields.io/badge/status-active-success)
 ![Platform](https://img.shields.io/badge/platform-React%20Native-blue)
