@@ -147,9 +147,9 @@ This project was brought to life by a dedicated team of developers and planners.
 | Role               | Name                            |
 | ------------------ | ------------------------------- |
 | 👑 **Presenter (P.O)** | [Amanda Duarte Meneghini do Carmo](https://github.com/AmandaMeneghini)|
-| 🧠 **Scrum Master** | Camila Cardozo Rocha            |
+| 🧠 **Scrum Master** | [Camila Cardozo Rocha](https://github.com/ccamilarochaa)            |
 | 💻 **Developer** | [Diogo da Silva Souza](https://github.com/Caoscrystal)            |
-| 💻 **Developer** | Jailson Rodrigues de Neiva      |
+| 💻 **Developer** | [Jailson Rodrigues de Neiva](https://github.com/JailsonTech)      |
 | 🔍 **QA Engineer** | [João Victor Santos da Costa](https://github.com/JoaoVicttor07)     |
 
 
