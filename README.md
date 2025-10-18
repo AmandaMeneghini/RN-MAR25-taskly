@@ -159,7 +159,7 @@ This project was brought to life by a dedicated team of developers and planners.
       align=left 
       margin=10 
       width=80
-      src="https://media.licdn.com/dms/image/v2/D4D03AQEQuzbUjylR-w/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1698328855703?e=1755129600&v=beta&t=O30Cc2VfLu_FYXnhWiSJE7gjIhEXJDhSnyatVW4-Oeg"
+      src="./src/Assets/Images/photo-linkedin-Gabriel-Santos.jpg"
         alt="Imagem do perfil do LinkedIn"
     />
     <p>&nbsp&nbsp&nbspGabriel Santos<br>
